@@ -7,7 +7,8 @@
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import readline from 'node:readline';
 import {
   currentHyperdriveId, extractSheetId, fillPassword, looksLikePostgres, needsPassword, parseHyperdriveId, parseWorkerUrl, patchHyperdriveId,
@@ -15,7 +16,8 @@ import {
 } from './setup-lib.js';
 
 const WRANGLER = 'wrangler.jsonc';
-const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+// Run wrangler's own JS with the current Node: no shell, no npx. (npx.cmd fails silently on Windows, and a shell would mangle & and % in passwords.)
+const wranglerBin = join(dirname(createRequire(import.meta.url).resolve('wrangler/package.json')), 'bin', 'wrangler.js');
 const say = (s = '') => console.log(s);
 const step = (n: number, title: string) => say(`\n━━ Step ${n}: ${title} ━━`);
 
@@ -36,8 +38,9 @@ async function required(q: string, opts: { secret?: boolean; check?: (v: string)
   }
 }
 function run(args: string[], opts: { capture?: boolean } = {}) {
-  const r = spawnSync(npx, ['wrangler', ...args], { encoding: 'utf8', stdio: opts.capture ? 'pipe' : 'inherit' });
-  return { ok: r.status === 0, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
+  const r = spawnSync(process.execPath, [wranglerBin, ...args], { encoding: 'utf8', stdio: opts.capture ? 'pipe' : 'inherit' });
+  const err = r.error ? `\n(could not start wrangler: ${r.error.message})` : '';
+  return { ok: r.status === 0 && !r.error, out: `${r.stdout ?? ''}${r.stderr ?? ''}${err}` };
 }
 
 async function main() {
@@ -48,7 +51,8 @@ async function main() {
 
   // 1 ─ Cloudflare login
   step(1, 'Log in to Cloudflare');
-  if (/not authenticated/i.test(run(['whoami'], { capture: true }).out)) {
+  const who = run(['whoami'], { capture: true });
+  if (!who.ok || !/logged in/i.test(who.out)) {
     say('A browser window will open. Log in and click Allow.');
     if (!run(['login']).ok) throw new Error('Cloudflare login did not finish. Run this again.');
   } else say('Already logged in.');
@@ -74,7 +78,7 @@ async function main() {
     let res = run(['hyperdrive', 'create', 'dulari-db', `--connection-string=${dbUrl}`], { capture: true });
     let id = res.ok ? parseHyperdriveId(res.out) : null;
     if (!id && /already exists/i.test(res.out)) id = parseHyperdriveId(run(['hyperdrive', 'list'], { capture: true }).out, 'dulari-db');
-    if (!id) throw new Error(`Could not create the connection:\n${res.out.replace(dbUrl, '***')}`);
+    if (!id) throw new Error(`Could not create the connection:\n${res.out.split(dbUrl).join('***')}`);
     jsonc = patchHyperdriveId(jsonc, id);
     writeFileSync(WRANGLER, jsonc);
     say('Connected.');
