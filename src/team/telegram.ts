@@ -1,9 +1,9 @@
 export interface TgButton { text: string; callback_data?: string; url?: string }
 
 export class Telegram {
-  constructor(private token: string, readonly chatId: string, private fetchImpl: typeof fetch = fetch) {}
+  constructor(private token: string, readonly chatId: string, private base = 'https://api.telegram.org', private fetchImpl: typeof fetch = (...a) => fetch(...a)) {}
   private async call<T = any>(method: string, body: unknown): Promise<T> {
-    const res = await this.fetchImpl(`https://api.telegram.org/bot${this.token}/${method}`, {
+    const res = await this.fetchImpl(`${this.base}/bot${this.token}/${method}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     const j: any = await res.json().catch(() => ({}));

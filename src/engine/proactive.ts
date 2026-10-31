@@ -4,7 +4,7 @@ import {
   kvGet, kvSet, markFollowupSent, markHoldingSent, openHandoff, pendingInbound, purgeOlderThan, resolveHandoffs, saveMedia, setBotMode,
   touchHandoffAlert, unclaimedHandoffsNeedingRepeat,
 } from '../db/repo.js';
-import { query, withConversationLock } from '../db/client.js';
+import { query } from '../db/client.js';
 import { effectiveMode, humanModeExpired } from './mode.js';
 import { computeReplyBy, describeTime } from './hours.js';
 import { sendBubble } from './sender.js';
@@ -40,7 +40,7 @@ export async function sendFollowup(app: App, followupId: string): Promise<void> 
 
 /** One honest holding line when the promised time passed and nobody answered. Then quiet again. */
 export async function sendHoldingLine(app: App, conversationId: string): Promise<void> {
-  await withConversationLock(conversationId, async () => {
+  {
     const conv = await getConversation(conversationId);
     if (!conv || conv.bot_mode !== 'human') return;
     const h = await openHandoff(conversationId);
@@ -56,7 +56,7 @@ export async function sendHoldingLine(app: App, conversationId: string): Promise
     await markHoldingSent(h.id, newDue);
     const fresh = (await openHandoff(conversationId))!;
     await sendHandoffAlert(app, { handoff: fresh, contact, lead: await getLead(contact.id), conversation: conv, late: true, tagOnDuty: true });
-  });
+  }
 }
 
 /** Unclaimed alerts repeat every 30 minutes, tagging whoever is on duty. */
@@ -117,7 +117,7 @@ export async function healthCheck(app: App): Promise<void> {
 
 /** Safety net: any reply that is overdue but whose job got lost gets re-queued. */
 export async function sweepOverdueReplies(app: App): Promise<void> {
-  for (const r of await conversationsOverdueForReply()) await app.jobs.scheduleReply(r.id, app.now());
+  for (const r of await conversationsOverdueForReply()) await app.jobs.scheduleReply(r.wa_id, r.id, app.now());
 }
 
 export async function retention(app: App): Promise<void> {

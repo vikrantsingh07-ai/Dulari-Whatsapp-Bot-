@@ -9,7 +9,7 @@ import {
   markGreeted, pendingInbound, saveAlertRef, setBotMode, setLeadSourceIfEmpty, setPendingPlan, kvGet, kvSet,
   type Contact, type Conversation, type MessageRow, type PendingPlan,
 } from '../db/repo.js';
-import { query, withConversationLock } from '../db/client.js';
+import { query } from '../db/client.js';
 import { parseReplyOutput, interleavePhotos, type Bubble, type ReplyOutput } from './bubbles.js';
 import { cleanText, cleanupBubbles, containsEmoji } from './cleanup.js';
 import { findBanned, stripBannedSentences } from './banned.js';
@@ -26,8 +26,8 @@ const GREETING_START = /^\s*(hi|hello|hey|namaste|namaskar)\b/i;
 
 /** Entry point of the "reply" job. Safe to call any number of times: stale calls do nothing. */
 export async function runReply(app: App, conversationId: string): Promise<void> {
-  const res = await withConversationLock(conversationId, () => runLocked(app, conversationId));
-  if (!res.ran) await app.jobs.scheduleReply(conversationId, new Date(app.now().getTime() + 3000)); // second job waits
+  // Mutual exclusion per chat is provided by the customer's Durable Object (timers run one at a time).
+  await runLocked(app, conversationId);
 }
 
 async function runLocked(app: App, conversationId: string): Promise<void> {
@@ -118,7 +118,7 @@ async function runLocked(app: App, conversationId: string): Promise<void> {
     draft = await generateDraft(app, { conv, contact, system, messages: built.messages, turn });
   } catch (e) {
     clearTimeout(interimTimer ?? undefined); stopTyping();
-    console.error('[reply] Claude failed', (e as Error).message);
+    console.error('[reply] Claude failed', (e as Error).stack ?? (e as Error).message);
     await failSafe(app, conv, contact, shadow, claimedAt, (e as Error).message);
     return;
   }
@@ -272,7 +272,7 @@ async function bookFollowup(app: App, conv: Conversation, contact: Contact): Pro
   await cancelFollowups(conv.id, 'rebooked');
   const due = new Date(app.now().getTime() + s.followupDays * 86_400_000);
   const row = await createFollowup(conv.id, s.followupTemplate, due);
-  if (row) await app.jobs.scheduleFollowup(row.id, due);
+  if (row) await app.jobs.scheduleFollowup(contact.wa_id, row.id, due);
 }
 
 // ---------------------------------------------------------------- special paths

@@ -10,8 +10,8 @@ export const TEMPORARY_ERROR_CODES = new Set(['130429', '131016', '131000', '133
 
 export class WhatsAppClient {
   private base: string;
-  constructor(private cfg: Pick<Config, 'WHATSAPP_TOKEN' | 'WHATSAPP_PHONE_NUMBER_ID' | 'WHATSAPP_API_VERSION'>, private fetchImpl: typeof fetch = fetch) {
-    this.base = `https://graph.facebook.com/${cfg.WHATSAPP_API_VERSION}`;
+  constructor(private cfg: Pick<Config, 'WHATSAPP_TOKEN' | 'WHATSAPP_PHONE_NUMBER_ID' | 'WHATSAPP_API_VERSION'> & { WHATSAPP_API_BASE?: string }, private fetchImpl: typeof fetch = (...a) => fetch(...a)) {
+    this.base = `${cfg.WHATSAPP_API_BASE ?? 'https://graph.facebook.com'}/${cfg.WHATSAPP_API_VERSION}`;
   }
 
   private async call(path: string, init: { method?: string; body?: unknown } = {}, tries = 3): Promise<any> {

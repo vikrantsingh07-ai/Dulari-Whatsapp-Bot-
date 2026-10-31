@@ -29,7 +29,7 @@ export function makeApp(over: { settings?: string[][] } = {}) {
   const clock = new Clock();
   const sent: Sent[] = [];
   const tgMessages: { text: string; buttons?: unknown }[] = [];
-  const scheduled: { conversationId: string; dueAt: Date }[] = [];
+  const scheduled: { waId: string; conversationId: string; dueAt: Date }[] = [];
   const claudeCalls: any[] = [];
   const script: Array<(args: any) => any> = [];
   let waSeq = 0;
@@ -48,7 +48,7 @@ export function makeApp(over: { settings?: string[][] } = {}) {
     ping: async () => ({ ok: true, detail: 'fake' }),
   };
   const jobs: Jobs = {
-    scheduleReply: async (conversationId, dueAt) => { scheduled.push({ conversationId, dueAt }); },
+    scheduleReply: async (waId, conversationId, dueAt) => { scheduled.push({ waId, conversationId, dueAt }); },
     scheduleEchoCheck: async () => {}, scheduleMediaDownload: async () => {}, scheduleFollowup: async () => {}, scheduleHolding: async () => {}, scheduleResend: async () => {},
   };
   const claude = {
@@ -64,7 +64,7 @@ export function makeApp(over: { settings?: string[][] } = {}) {
       notify: async (text: string) => { tgMessages.push({ text }); },
       answerCallback: async () => {}, clearButtons: async () => {},
     },
-    brain: { get: () => brain, getHours: () => parseStudioHours(brain.settings.studioHours, brain.settings.holidays), isLoaded: () => true, lastSyncOk: null, lastSyncError: null },
+    brain: { ensure: async () => {}, get: () => brain, getHours: () => parseStudioHours(brain.settings.studioHours, brain.settings.holidays), isLoaded: () => true, lastSyncOk: null, lastSyncError: null },
     now: clock.now, sleep: async () => {}, rand: () => 0.5,
   } as unknown as App;
   return { app, clock, sent, tgMessages, scheduled, claudeCalls, script, brain };

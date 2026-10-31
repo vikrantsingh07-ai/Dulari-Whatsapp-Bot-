@@ -1,7 +1,6 @@
-// npm run set-webhooks  -> registers PUBLIC_URL/telegram/webhook with Telegram (also done on boot).
-import { loadConfig } from '../src/config.js';
+// npm run set-webhooks  -> registers PUBLIC_URL/telegram/webhook with Telegram. Run once after the first deploy.
+// Needs TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_WEBHOOK_SECRET, PUBLIC_URL in the environment (e.g. from .dev.vars).
 import { Telegram } from '../src/team/telegram.js';
-const cfg = loadConfig();
-if (!cfg.PUBLIC_URL) throw new Error('Set PUBLIC_URL first');
-await new Telegram(cfg.TELEGRAM_BOT_TOKEN, cfg.TELEGRAM_CHAT_ID).setWebhook(`${cfg.PUBLIC_URL.replace(/\/$/, '')}/telegram/webhook`, cfg.TELEGRAM_WEBHOOK_SECRET);
+const need = (k: string) => { const v = process.env[k]; if (!v) throw new Error(`Set ${k}`); return v; };
+await new Telegram(need('TELEGRAM_BOT_TOKEN'), need('TELEGRAM_CHAT_ID')).setWebhook(`${need('PUBLIC_URL').replace(/\/$/, '')}/telegram/webhook`, need('TELEGRAM_WEBHOOK_SECRET'));
 console.log('Telegram webhook set.');

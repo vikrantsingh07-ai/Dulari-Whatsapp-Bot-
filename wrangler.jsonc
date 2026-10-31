@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dulari-whatsapp-agent",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Run close to the Supabase Mumbai database.
+  "placement": { "mode": "smart" },
+
+  // One Durable Object per customer = the per-chat lock + durable timers (8s batching, follow-ups, holding lines).
+  "durable_objects": { "bindings": [{ "name": "CHAT", "class_name": "ChatDO" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChatDO"] }],
+
+  // Supabase Postgres through Hyperdrive. Create with:
+  //   npx wrangler hyperdrive create dulari-db --connection-string="postgres://..."   then paste the id here.
+  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "REPLACE_WITH_HYPERDRIVE_ID" }],
+
+  // One trigger, every minute (UTC). src/worker/cron.ts fans out to the 5/10/15-minute and daily jobs.
+  "triggers": { "crons": ["* * * * *"] },
+
+  // Non-secret settings. Secrets go in with `npx wrangler secret put NAME` (see README).
+  "vars": {
+    "NODE_ENV": "production",
+    "WHATSAPP_API_VERSION": "v21.0",
+    "WHATSAPP_BUSINESS_NUMBER": "918851472382",
+    "WHATSAPP_IS_TEST_NUMBER": "true",
+    "CLAUDE_MODEL": "claude-sonnet-5-5",
+    "CLAUDE_FAST_MODEL": "claude-haiku-5-5",
+    "BRAIN_SOURCE": "sheet",
+    "PUBLIC_URL": "https://REPLACE.workers.dev"
+  },
+
+  "observability": { "enabled": true }
+}

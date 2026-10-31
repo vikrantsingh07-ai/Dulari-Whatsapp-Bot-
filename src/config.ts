@@ -40,6 +40,17 @@ const schema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_CHAT_ID: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
+
+  // dashboard
+  ADMIN_TOKEN: z.string().optional(),
+  DASHBOARD_ORIGIN: z.string().optional(),
+
+  // endpoint overrides, used by the local end-to-end test (point at mock servers)
+  WHATSAPP_API_BASE: z.string().optional(),
+  TELEGRAM_API_BASE: z.string().optional(),
+  ANTHROPIC_BASE_URL: z.string().optional(),
+  GOOGLE_SHEETS_BASE: z.string().optional(),
+  GOOGLE_TOKEN_URL: z.string().optional(),
 });
 
 export type Config = z.infer<typeof schema>;

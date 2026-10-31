@@ -111,7 +111,7 @@ export async function clearReplyDueUnlessNewer(conversationId: string, claimedAt
   await query(`update conversations set reply_due_at = null, reply_first_at = null where id = $1 and (reply_due_at is null or reply_due_at <= $2)`, [conversationId, claimedAt]);
 }
 export const conversationsOverdueForReply = () =>
-  query<{ id: string }>(`select id from conversations where reply_due_at is not null and reply_due_at < now() - interval '20 seconds'`);
+  query<{ id: string; wa_id: string }>(`select c.id, k.wa_id from conversations c join contacts k on k.id = c.contact_id where c.reply_due_at is not null and c.reply_due_at < now() - interval '20 seconds'`);
 export async function setPendingPlan(conversationId: string, plan: PendingPlan | null): Promise<void> {
   await query('update conversations set pending_plan = $2 where id = $1', [conversationId, plan ? JSON.stringify(plan) : null]);
 }

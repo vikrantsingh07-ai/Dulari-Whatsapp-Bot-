@@ -9,7 +9,17 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node",
+      "@cloudflare/workers-types"
+    ],
+    "lib": [
+      "ES2022"
+    ]
   },
-  "include": ["src", "test", "scripts"]
+  "include": [
+    "src",
+    "test",
+    "scripts"
+  ]
 }

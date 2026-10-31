@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import fixture from '../fixtures/brain.sample.json' with { type: 'json' };
 import { parseBrain } from '../src/brain/parse.js';
 import { findProducts, handleFromUrl, parseEnquire } from '../src/brain/lookup.js';
 import { renderKnowledge } from '../src/brain/prompt.js';
 
-const fixture = JSON.parse(readFileSync(new URL('../fixtures/brain.sample.json', import.meta.url), 'utf8'));
 
 describe('brain parsing', () => {
-  it('sample fixture has bad prices (SAMPLE 24000) so the validator rejects it', () => {
+  it('the sample fixture used for local/e2e runs validates', () => {
     const r = parseBrain({ products: fixture.Products, faq: fixture.FAQ, policies: fixture.Policies, settings: fixture.Settings, team: fixture.Team });
+    expect(r.errors).toEqual([]);
+    expect(r.brain!.products).toHaveLength(11);
+  });
+  it('rejects a non-numeric price', () => {
+    const r = parseBrain({ products: [['name', 'handle', 'price'], ['X', 'x', 'call us']], settings: [['key', 'value'], ['studio_hours', 'Mon-Sat 10:00-19:00']] });
     expect(r.brain).toBeNull();
     expect(r.errors[0]).toMatch(/Products row 2.*price/);
   });

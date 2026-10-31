@@ -8,7 +8,7 @@ import type { Config } from '../config.js';
 export class ShopifyClient {
   private token: { value: string; expires: number } | null = null;
   private cache = new Map<string, { urls: string[]; at: number }>();
-  constructor(private cfg: Pick<Config, 'SHOPIFY_SHOP_DOMAIN' | 'SHOPIFY_CLIENT_ID' | 'SHOPIFY_CLIENT_SECRET'>, private fetchImpl: typeof fetch = fetch) {}
+  constructor(private cfg: Pick<Config, 'SHOPIFY_SHOP_DOMAIN' | 'SHOPIFY_CLIENT_ID' | 'SHOPIFY_CLIENT_SECRET'>, private fetchImpl: typeof fetch = (...a) => fetch(...a)) {}
 
   static maybeCreate(cfg: Config): ShopifyClient | null {
     return cfg.SHOPIFY_SHOP_DOMAIN && cfg.SHOPIFY_CLIENT_ID && cfg.SHOPIFY_CLIENT_SECRET ? new ShopifyClient(cfg) : null;

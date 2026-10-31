@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Dulari Bot Status</title>
+<style>
+  :root { --bg:#f6f5f1; --card:#fff; --ink:#1d1b17; --mute:#6d685e; --line:#e4e1d8; --ok:#2f7d4f; --warn:#b36b00; --bad:#b3261e; --accent:#8a5a2b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#14130f; --card:#1d1b17; --ink:#f1eee6; --mute:#a39d90; --line:#33302a; --ok:#6fcf97; --warn:#f2b45c; --bad:#ff8a80; --accent:#d9a066; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:20px 16px 48px; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--mute); margin:28px 0 8px; font-weight:600; }
+  .sub { color:var(--mute); font-size:13px; }
+  .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .big { font-size:28px; font-weight:650; line-height:1.1; } .lbl { color:var(--mute); font-size:12px; margin-top:4px; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:12px; font-weight:600; border:1px solid var(--line); }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:top; } th { color:var(--mute); font-weight:600; font-size:12px; }
+  tr:last-child td { border-bottom:0; } .scroll { overflow-x:auto; }
+  form { display:grid; gap:10px; max-width:420px; } input { padding:10px 12px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); font:inherit; }
+  button { padding:10px 14px; border-radius:8px; border:0; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button.link { background:none; color:var(--mute); font-weight:400; padding:0; text-decoration:underline; }
+  .hide { display:none; } .err { color:var(--bad); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <div><h1>Dulari bot status</h1><div class="sub" id="updated">Not connected</div></div>
+    <button class="link hide" id="logout">Disconnect</button>
+  </header>
+
+  <section id="login">
+    <h2>Connect</h2>
+    <form id="form">
+      <input id="url" placeholder="Worker URL, e.g. https://dulari-whatsapp-agent.you.workers.dev" required>
+      <input id="token" type="password" placeholder="Admin token" required>
+      <button>Connect</button>
+      <div class="err" id="error"></div>
+      <div class="sub">Stored only in this browser. The token is the Worker's ADMIN_TOKEN secret.</div>
+    </form>
+  </section>
+
+  <section id="app" class="hide">
+    <div class="grid" id="top"></div>
+    <h2>Chats by mode</h2><div class="grid" id="modes"></div>
+    <h2>Open handoffs</h2><div class="scroll"><table id="handoffs"></table></div>
+    <h2>Shadow-week drafts (last 14 days)</h2><div class="grid" id="drafts"></div>
+    <h2>Claude usage (last 7 days, IST)</h2><div class="scroll"><table id="llm"></table></div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: (k) => { try { localStorage.removeItem(k); } catch {} } };
+let timer;
+
+const ago = (iso) => { const m = Math.round((Date.now() - new Date(iso)) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m/60)} h ago` : `${Math.round(m/1440)} d ago`; };
+const card = (n, l, cls = '') => `<div class="card"><div class="big ${cls}">${esc(n)}</div><div class="lbl">${esc(l)}</div></div>`;
+
+async function load() {
+  const url = store.get('dulari_url'), token = store.get('dulari_token');
+  if (!url || !token) return show(false);
+  try {
+    const r = await fetch(url.replace(/\/$/, '') + '/admin/status', { headers: { Authorization: 'Bearer ' + token } });
+    if (r.status === 401) throw new Error('Wrong admin token');
+    if (!r.ok) throw new Error('Worker returned ' + r.status);
+    render(await r.json()); show(true);
+  } catch (e) { $('error').textContent = e.message; show(false, true); }
+}
+function show(connected, keepError) {
+  $('login').classList.toggle('hide', connected); $('app').classList.toggle('hide', !connected); $('logout').classList.toggle('hide', !connected);
+  if (!keepError) $('error').textContent = '';
+  clearInterval(timer); if (connected) timer = setInterval(load, 30000);
+}
+function render(s) {
+  $('updated').textContent = 'Updated ' + new Date(s.generatedAt).toLocaleTimeString();
+  const live = s.numberMode === 'real' && s.settings.botEnabled && !s.settings.shadowMode;
+  const state = !s.settings.botEnabled ? ['OFF', 'bad'] : s.settings.shadowMode ? ['SHADOW', 'warn'] : ['LIVE', 'ok'];
+  $('top').innerHTML =
+    card(state[0], 'Bot (' + s.numberMode + ' number)', state[1]) +
+    card(s.stats?.new_leads ?? 0, 'New leads, 24h') +
+    card(s.stats?.hot_unanswered ?? 0, 'Hot, unanswered', Number(s.stats?.hot_unanswered) ? 'bad' : '') +
+    card(s.stats?.handoffs_open ?? 0, 'Open handoffs') +
+    card(s.brain.products, 'Active products in sheet', s.brain.problem ? 'warn' : '') +
+    card(s.llmErrors24h, 'Claude errors, 24h', s.llmErrors24h ? 'bad' : 'ok');
+  $('modes').innerHTML = (s.modes.length ? s.modes : [{ bot_mode: 'none', n: 0 }]).map((m) => card(m.n, m.bot_mode)).join('');
+  $('handoffs').innerHTML = '<tr><th>Customer</th><th>Urgency</th><th>Reason</th><th>Promised by</th><th>Owner</th></tr>' +
+    (s.openHandoffs.length ? s.openHandoffs.map((h) => `<tr><td>${esc(h.name || '+' + h.wa_id)}<div class="sub">+${esc(h.wa_id)} · ${ago(h.created_at)}</div></td><td><span class="pill ${h.urgency === 'hot' ? 'bad' : ''}">${esc(h.urgency)}</span></td><td>${esc(h.reason)}</td><td>${h.due_at ? new Date(h.due_at).toLocaleString() : ''}</td><td>${esc(h.claimed_by || 'unclaimed')}</td></tr>`).join('') : '<tr><td colspan="5" class="sub">Nothing waiting.</td></tr>');
+  const r = Object.fromEntries(s.draftRatings.map((d) => [d.rating || 'unrated', Number(d.n)])); const rated = (r.up || 0) + (r.down || 0);
+  $('drafts').innerHTML = card(rated ? Math.round((r.up || 0) / rated * 100) + '%' : 'n/a', '👍 of rated drafts (target 90%)', rated && (r.up || 0) / rated >= .9 ? 'ok' : rated ? 'warn' : '') + card(r.up || 0, '👍') + card(r.down || 0, '👎') + card(r.unrated || 0, 'unrated');
+  $('llm').innerHTML = '<tr><th>Day</th><th>Calls</th><th>Tokens in / out</th><th>Avg latency</th><th>Cost</th></tr>' +
+    (s.llm.length ? s.llm.map((d) => `<tr><td>${esc(d.day)}</td><td>${esc(d.calls)}</td><td>${Number(d.in_tokens).toLocaleString()} / ${Number(d.out_tokens).toLocaleString()}</td><td>${esc(d.avg_ms)} ms</td><td>${d.cost == null ? 'set PRICE_* vars' : '$' + Number(d.cost).toFixed(3)}</td></tr>`).join('') : '<tr><td colspan="5" class="sub">No calls yet.</td></tr>');
+}
+$('form').addEventListener('submit', (e) => { e.preventDefault(); store.set('dulari_url', $('url').value.trim()); store.set('dulari_token', $('token').value.trim()); load(); });
+$('logout').addEventListener('click', () => { store.del('dulari_url'); store.del('dulari_token'); show(false); $('updated').textContent = 'Not connected'; });
+$('url').value = store.get('dulari_url') || ''; load();
+</script>
+</body>
+</html>

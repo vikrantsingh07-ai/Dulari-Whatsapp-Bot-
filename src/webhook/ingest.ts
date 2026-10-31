@@ -52,12 +52,12 @@ export async function handleInbound(app: App, m: InboundMessage): Promise<void> 
 
   await touchInbound(conv.id, new Date());
   await cancelFollowups(conv.id, 'customer_replied');
-  if (m.mediaId && MEDIA_TYPES.has(m.type)) await app.jobs.scheduleMediaDownload(m.mediaId); // links expire fast
+  if (m.mediaId && MEDIA_TYPES.has(m.type)) await app.jobs.scheduleMediaDownload(m.from, m.mediaId); // links expire fast
   if (m.text && parseEnquire(m.text)) await setLeadSourceIfEmpty(contact.id, 'website_enquire');
 
   const brain = app.brain.get();
   const mode = effectiveMode({ conversationMode: conv.bot_mode, settings: brain.settings, hours: app.brain.getHours(), now: app.now() });
-  if (mode === 'human') { await maybeHoldingLine(app, conv); return; }
+  if (mode === 'human') { await maybeHoldingLine(app, conv, contact.wa_id); return; }
   if (mode === 'off' || contact.opted_out || contact.muted) return;
 
   const { dueAt, firstPendingAt } = computeReplyDue({
@@ -65,16 +65,16 @@ export async function handleInbound(app: App, m: InboundMessage): Promise<void> 
     batchSeconds: brain.settings.batchSeconds, maxSeconds: brain.settings.batchMaxSeconds,
   });
   await setReplyDue(conv.id, dueAt, firstPendingAt);
-  await app.jobs.scheduleReply(conv.id, dueAt);
+  await app.jobs.scheduleReply(contact.wa_id, conv.id, dueAt);
 }
 
 /** Promise kept: promised time passed, nobody replied, customer wrote again -> one honest line. */
-async function maybeHoldingLine(app: App, conv: Conversation): Promise<void> {
+async function maybeHoldingLine(app: App, conv: Conversation, waId: string): Promise<void> {
   const h = await openHandoff(conv.id);
   if (!h || !h.due_at || h.holding_sent_at) return;
   if (h.due_at > app.now()) return;
   if (conv.last_human_at && conv.last_human_at > h.created_at) return;
-  await app.jobs.scheduleHolding(conv.id, 8);
+  await app.jobs.scheduleHolding(waId, conv.id, 8);
 }
 
 /** Echo = a team member typed from the phone app. Delayed 3s so our own sends (stored first) are ignored. */
@@ -100,7 +100,7 @@ async function handleStatus(app: App, s: StatusEvent): Promise<void> {
   if (s.status !== 'failed') return;
   console.warn('[wa] send failed', s.waMessageId, s.errorCode, s.errorTitle);
   const temporary = s.errorCode ? TEMPORARY_ERROR_CODES.has(s.errorCode) : false;
-  if (temporary && row) await app.jobs.scheduleResend(s.waMessageId, 5);
+  if (temporary && row && s.recipient) await app.jobs.scheduleResend(s.recipient, s.waMessageId, 5);
   await app.tg.notify(`WhatsApp send failed (code ${s.errorCode ?? '?'}: ${s.errorTitle ?? 'unknown'}) to +${s.recipient ?? '?'}.${temporary ? ' Retrying once.' : ' Not retrying.'}`);
 }
 

@@ -27,7 +27,7 @@ export class ClaudeClient {
     this.mainModel = cfg.CLAUDE_MODEL;
     this.fastModel = cfg.CLAUDE_FAST_MODEL;
     // we do our own retry-then-fallback, so the SDK must not retry for long
-    this.sdk = sdk ?? new Anthropic({ apiKey: cfg.ANTHROPIC_API_KEY, timeout: 40_000, maxRetries: 0 });
+    this.sdk = sdk ?? new Anthropic({ apiKey: cfg.ANTHROPIC_API_KEY, timeout: 40_000, maxRetries: 0, ...(cfg.ANTHROPIC_BASE_URL ? { baseURL: cfg.ANTHROPIC_BASE_URL } : {}) });
   }
 
   private price(model: string): Pricing {
