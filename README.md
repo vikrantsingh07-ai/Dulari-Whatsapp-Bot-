@@ -31,7 +31,7 @@ Vercel: small status dashboard that reads the Worker's /admin/status
 
 ## Deploy (Cloudflare Workers + Vercel)
 
-You need a Cloudflare account (Workers **Paid** plan, about $5/month, for Durable Objects and cron) and a Vercel account. Do Phase 0 of the spec first (Meta app + system-user token, Brain and Leads sheets with a Google service account, Telegram bot and group, Anthropic key with a monthly spend cap).
+Everything runs on **free tiers** (see `docs/NOTES.md`, "Running on free tiers"): Cloudflare Workers Free (SQLite-backed Durable Objects, cron and Hyperdrive are all included), Supabase Free, Vercel Hobby. The only unavoidable cost is Claude API usage, billed per message. Do Phase 0 of the spec first (Meta app + system-user token, Brain and Leads sheets with a Google service account, Telegram bot and group, Anthropic key with a monthly spend cap).
 
 ```bash
 npm install
@@ -52,7 +52,7 @@ npx wrangler login
    ```
 4. **Deploy:** `npm run deploy`. Put the resulting `https://dulari-whatsapp-agent.<you>.workers.dev` into `PUBLIC_URL` in `wrangler.jsonc` and deploy again.
 5. **Webhooks.** In the Meta app: callback URL `PUBLIC_URL/webhook` with your verify token, subscribe to `messages` (and, after coexistence onboarding, `smb_message_echoes` and `history`). Telegram: `PUBLIC_URL=... TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... TELEGRAM_WEBHOOK_SECRET=... npm run set-webhooks`.
-6. **Dashboard (Vercel).** `cd dashboard && npx vercel --prod`, open it, paste the Worker URL and `ADMIN_TOKEN`. Set `DASHBOARD_ORIGIN` (Worker secret) to the Vercel URL so the browser may call the Worker.
+6. **Dashboard (free).** `cd dashboard && npx vercel --prod` (Vercel Hobby is meant for non-commercial use, so for a business you may prefer Cloudflare Pages: `npx wrangler pages deploy dashboard`), open it, paste the Worker URL and `ADMIN_TOKEN`. Set `DASHBOARD_ORIGIN` (Worker secret) to the Vercel URL so the browser may call the Worker.
 7. **Go-live switch** is in the Brain sheet Settings tab: `SHADOW_MODE` (default TRUE = drafts to Telegram only) and `BOT_ENABLED`. `WHATSAPP_IS_TEST_NUMBER` in `wrangler.jsonc` stays `"true"` until the real number is onboarded (phase 3).
 
 Local development: copy `.dev.vars.example` to `.dev.vars`, point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` at a local Postgres (the URL needs a password), run `npm run dev`. Use Meta's **test number** locally.

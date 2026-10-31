@@ -20,7 +20,7 @@ Nothing below has been run against the live service. Check each in the Meta test
 - Each Worker invocation opens its own Postgres connection (`withDb`, AsyncLocalStorage) because Workers cannot share connections across requests. The Brain sheet is cached per isolate and refreshes itself (`BrainStore.ensure`).
 - Google Sheets auth is hand-rolled (WebCrypto RS256 JWT) because `google-auth-library` does not run on Workers.
 - Migrations are applied from your machine with `npm run migrate`, not by the Worker.
-- Needs the Workers **Paid** plan (Durable Objects with alarms, per-minute cron).
+- **Runs on free tiers** (see below). No paid Cloudflare plan is required.
 - **Newer message while Claude writes**: the draft (and its side effects: photos, handoff) is discarded and the next job, already re-armed 8s out, answers everything together.
 - **Handoff side effects are applied after the bubbles are sent**, never from a discarded draft.
 - **`SHADOW_MODE` defaults to TRUE** (also when the Settings row is missing) so nothing reaches a customer by accident. Set it to FALSE in the sheet to go live.
@@ -37,3 +37,22 @@ Nothing below has been run against the live service. Check each in the Meta test
 - Instagram DMs, weekly review tooling, template packaging.
 - Submitting the 4 follow-up templates to Meta (done in WhatsApp Manager).
 - Ongoing human steps: coexistence onboarding of +91 88514 72382, token rotation after the dev finishes, answering the spec's open questions (hours, handoff owner, trade pricing policy, delivery outside NCR, kids' set, first-message disclosure, retention).
+
+## Running on free tiers
+Checked against Cloudflare's current docs (Oct 2026): SQLite-backed Durable Objects (which `wrangler.jsonc` uses) and Hyperdrive are included in **Workers Free**; cron triggers are allowed (limit 5, we use 1).
+
+| Free limit | Allowance | What we use (small studio, ~300 chats/day) |
+|---|---|---|
+| Worker + DO requests | 100,000 / day | ~1,440 cron runs + webhooks (inbound + ~3 status events per bubble) + timers: a few thousand |
+| Hyperdrive queries | 100,000 / day | ~25-40 per reply, ~2 per cron minute: roughly 15-25k |
+| DO rows written | 100,000 / day | ~10 per message (timer save + setAlarm): ~3-5k |
+| DO storage | 5 GB total | a few KB per chat |
+| External subrequests | 50 per invocation | a reply makes about 10-20 (Claude calls, WhatsApp sends, Telegram) |
+| CPU time | **10 ms** per invocation | see below |
+| Supabase Free | 500 MB DB | text only; media is stored in Postgres, so watch it (delete or move to R2 if you get many photos) |
+| Vercel Hobby | free | intended for non-commercial use; use Cloudflare Pages for the dashboard if that matters |
+
+**The one real risk is the 10 ms CPU cap.** Measured in Node with fake network clients (so excluding the real HTTP/TLS work): webhook 1.5 ms, status webhook 0.2 ms, full reply cycle with a tool call and two bubbles 3.7 ms (warm). The first run after a cold start measured 6 ms (webhook) and 43 ms (reply, JIT warm-up). Real Claude / WhatsApp / Postgres calls add some CPU on top. Cloudflare tolerates occasional overruns ("built-in flexibility"), and a killed timer is not lost: it stays in the Durable Object, the alarm retries, and the minute cron re-queues any overdue reply. But if replies are cut off repeatedly, check `npx wrangler tail` for "exceeded CPU time limit". **I could not measure this on real Cloudflare**, only locally.
+Mitigations if it happens: set `CLAUDE_MODEL` to `claude-haiku-5-5` (smaller outputs), lower the follow-up and mirror activity, or upgrade to Workers Paid ($5/month, 30 s CPU).
+
+What is not free: Claude API usage (pay per message; set a monthly cap in the Anthropic Console, or run Haiku-only), and WhatsApp template messages if you enable follow-ups (replies inside 24 hours are free). Telegram, Google Sheets and Meta's Cloud API itself cost nothing.
