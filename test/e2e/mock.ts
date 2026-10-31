@@ -14,6 +14,11 @@ export function startMock(port: number): Promise<{ server: Server; calls: MockCa
       const body = raw ? (() => { try { return JSON.parse(raw); } catch { return raw; } })() : null;
       const json = (o: unknown, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(o)); };
       if (url.startsWith('/__calls')) return json(calls);
+      if (url.startsWith('/api/v1/chat/completions')) {
+        calls.llm.push(body);
+        const text = JSON.stringify({ messages: ['The Daily Table is Rs 9500, solid wood.', 'Which city is it for?'], react: null, reply_to: null });
+        return json({ id: 'gen-mock', model: body?.model ?? 'mock', choices: [{ index: 0, message: { role: 'assistant', content: text }, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 10, cost: 0 } });
+      }
       if (url.startsWith('/v1/messages')) {
         calls.llm.push(body);
         const text = JSON.stringify({ messages: ['The Daily Table is Rs 9500, solid wood.', 'Which city is it for?'], react: null, reply_to: null });

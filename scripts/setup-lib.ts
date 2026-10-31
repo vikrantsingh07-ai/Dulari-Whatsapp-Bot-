@@ -47,3 +47,10 @@ export function pickGroupChatId(updates: any): { id: string; title: string } | n
 }
 
 export function toBase64(text: string): string { return Buffer.from(text, 'utf8').toString('base64'); }
+
+/** Sets a string value inside the "vars" block of wrangler.jsonc. */
+export function patchVar(wranglerJsonc: string, name: string, value: string): string {
+  const re = new RegExp(`("${name}":\\s*")[^"]*(")`);
+  if (!re.test(wranglerJsonc)) throw new Error(`wrangler.jsonc has no "${name}" setting`);
+  return wranglerJsonc.replace(re, (_m, a, b) => `${a}${value.replace(/"/g, '')}${b}`);
+}

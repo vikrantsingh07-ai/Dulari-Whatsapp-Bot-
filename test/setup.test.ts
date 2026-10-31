@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currentHyperdriveId, extractSheetId, fillPassword, looksLikePostgres, needsPassword, parseHyperdriveId, parseWorkerUrl, patchHyperdriveId, pickGroupChatId, randomToken } from '../scripts/setup-lib.js';
+import { currentHyperdriveId, extractSheetId, fillPassword, looksLikePostgres, needsPassword, parseHyperdriveId, parseWorkerUrl, patchHyperdriveId, pickGroupChatId, patchVar, randomToken } from '../scripts/setup-lib.js';
 import { readFileSync } from 'node:fs';
 
 describe('setup helpers', () => {
@@ -30,6 +30,14 @@ describe('setup helpers', () => {
     expect(parseWorkerUrl('Deployed dulari-whatsapp-agent triggers\n  https://dulari-whatsapp-agent.me.workers.dev\nCurrent Version ID')).toBe('https://dulari-whatsapp-agent.me.workers.dev');
     expect(pickGroupChatId({ result: [{ message: { chat: { id: 5, type: 'private' } } }, { message: { chat: { id: -1001234, type: 'supergroup', title: 'Dulari Leads' } } }] })).toEqual({ id: '-1001234', title: 'Dulari Leads' });
     expect(pickGroupChatId({ result: [] })).toBeNull();
+  });
+  it('patches wrangler vars', () => {
+    const src = readFileSync('wrangler.jsonc', 'utf8');
+    const out = patchVar(patchVar(src, 'LLM_PROVIDER', 'anthropic'), 'LLM_MODEL', 'claude-sonnet-5-5');
+    expect(out).toContain('"LLM_PROVIDER": "anthropic"');
+    expect(out).toContain('"LLM_MODEL": "claude-sonnet-5-5"');
+    expect(out).toContain('"LLM_FAST_MODEL": "openrouter/free"');
+    expect(() => patchVar(src, 'NOPE', 'x')).toThrow();
   });
   it('makes long random tokens', () => { expect(randomToken()).toHaveLength(48); expect(randomToken()).not.toBe(randomToken()); });
 });

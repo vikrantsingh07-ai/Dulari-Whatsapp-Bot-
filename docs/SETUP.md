@@ -12,7 +12,9 @@ Keep a notepad open and paste each item there as you go.
 - supabase.com -> New project -> region **Mumbai** -> choose a database password and save it.
 - Click **Connect** (top bar) -> **Session pooler** -> copy the link.
 
-**3. Anthropic key**: console.anthropic.com -> API keys -> Create key. In Settings -> Limits, set a monthly spend limit.
+**3. AI key.** Pick one:
+- **OpenRouter** (openrouter.ai -> Keys -> Create key). One key for many models. Pick a model on openrouter.ai/models that supports **tool calling** (filter by "tools"). The setup uses `openrouter/free` if you don't choose, which lets OpenRouter pick any free model that can use tools.
+- **Anthropic** (console.anthropic.com -> API keys). Set a monthly spend limit in Settings -> Limits.
 
 **4. Telegram**
 - In Telegram, message **@BotFather**, send `/newbot`, follow the questions, save the **token**.

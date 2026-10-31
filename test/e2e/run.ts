@@ -25,8 +25,7 @@ const { server: mock, calls } = await startMock(MOCK);
 
 writeFileSync('.dev.vars', Object.entries({
   NODE_ENV: 'development', WHATSAPP_IS_TEST_NUMBER: 'true', WHATSAPP_TOKEN: 't', WHATSAPP_PHONE_NUMBER_ID: '123', WHATSAPP_APP_SECRET: SECRET, WHATSAPP_VERIFY_TOKEN: 'verify',
-  WHATSAPP_API_BASE: `http://127.0.0.1:${MOCK}`, TELEGRAM_API_BASE: `http://127.0.0.1:${MOCK}`, ANTHROPIC_BASE_URL: `http://127.0.0.1:${MOCK}`,
-  ANTHROPIC_API_KEY: 'k', TELEGRAM_BOT_TOKEN: 'tg', TELEGRAM_CHAT_ID: '-100', TELEGRAM_WEBHOOK_SECRET: 'tgsecret', ADMIN_TOKEN: 'admin', BRAIN_SOURCE: 'file',
+  WHATSAPP_API_BASE: `http://127.0.0.1:${MOCK}`, TELEGRAM_API_BASE: `http://127.0.0.1:${MOCK}`, LLM_PROVIDER: 'openrouter', OPENROUTER_BASE_URL: `http://127.0.0.1:${MOCK}/api/v1`, OPENROUTER_API_KEY: 'k', TELEGRAM_BOT_TOKEN: 'tg', TELEGRAM_CHAT_ID: '-100', TELEGRAM_WEBHOOK_SECRET: 'tgsecret', ADMIN_TOKEN: 'admin', BRAIN_SOURCE: 'file',
 }).map(([k, v]) => `${k}=${v}`).join('\n'));
 
 const wr = spawn('npx', ['wrangler', 'dev', '--port', String(WORKER), '--ip', '127.0.0.1'], {

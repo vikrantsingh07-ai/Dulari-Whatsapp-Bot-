@@ -4,6 +4,7 @@ import { withDb } from '../db/client.js';
 import { BrainStore } from '../brain/store.js';
 import { SheetsClient } from '../brain/sheets.js';
 import { ClaudeClient } from '../brain/claude.js';
+import { OpenRouterClient } from '../brain/openrouter.js';
 import { ShopifyClient } from '../shopify/client.js';
 import { LeadsMirror } from '../leads/mirror.js';
 import { Telegram } from '../team/telegram.js';
@@ -27,7 +28,7 @@ export function buildApp(env: Env, jobs: Jobs): App {
   return {
     cfg, tg, jobs, brain: brainSingleton,
     wa: new WhatsAppClient(cfg),
-    claude: new ClaudeClient(cfg),
+    claude: cfg.LLM_PROVIDER === 'openrouter' ? new OpenRouterClient(cfg) : new ClaudeClient(cfg),
     shopify: ShopifyClient.maybeCreate(cfg),
     mirror: sheets && cfg.LEADS_SHEET_ID ? new LeadsMirror(sheets, cfg.LEADS_SHEET_ID) : null,
     now: () => new Date(),

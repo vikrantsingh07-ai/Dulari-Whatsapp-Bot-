@@ -21,7 +21,7 @@ Vercel: small status dashboard that reads the Worker's /admin/status
 | Webhook: signature check, dedupe on message id, 200 in <2s (work continues via `waitUntil`), echo (team typed on phone) and status handling | `src/webhook`, `src/whatsapp` |
 | The 15 "feel human" rules: 8s batching capped at 25s, read + typing, typing pace with jitter, 1-3 short bubbles, language mirroring, quiet on "ok/thanks", memory, one photo not a list, quoted replies, honest "one sec", real hours and promises, clean-up pass (markdown, dashes, prices as Rs. 1,25,000, banned phrases with a Haiku rewrite), honest about being an assistant, silent in human mode | `src/engine`, `src/brain/prompt.ts` |
 | Bot modes `auto / human / shadow / off`, kill switch, 48h human timeout (trade/project stay human) | `src/engine/mode.ts` |
-| Claude Sonnet 5.5 with tools `lookup_product`, `send_product_photo`, `update_lead`, `handoff`; retry once, then Haiku 5.5, then an honest line + human mode + alert | `src/brain`, `src/engine/reply.ts` |
+| AI provider: OpenRouter (default) or Anthropic, with tools `lookup_product`, `send_product_photo`, `update_lead`, `handoff`; retry once, then Haiku 5.5, then an honest line + human mode + alert | `src/brain`, `src/engine/reply.ts` |
 | Brain sheet sync every 10 min with row-level validation, last-good snapshot kept, errors posted to Telegram | `src/brain/parse.ts`, `store.ts` |
 | Handoff alerts with Open chat / Take / Release / Snooze, 30-minute repeat, "promise kept" holding line, 9:30 digest, `/take /release /shadow /note /status /forget /optin` | `src/team`, `src/engine/proactive.ts` |
 | Leads mirrored from Postgres to the "Dulari Leads" sheet every 5 min | `src/leads` |

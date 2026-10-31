@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import readline from 'node:readline';
 import {
   currentHyperdriveId, extractSheetId, fillPassword, looksLikePostgres, needsPassword, parseHyperdriveId, parseWorkerUrl, patchHyperdriveId,
-  pickGroupChatId, randomToken, toBase64,
+  pickGroupChatId, patchVar, randomToken, toBase64,
 } from './setup-lib.js';
 
 const WRANGLER = 'wrangler.jsonc';
@@ -45,7 +45,7 @@ function run(args: string[], opts: { capture?: boolean } = {}) {
 
 async function main() {
   say('Dulari WhatsApp bot setup. It takes about 10 minutes. Have these ready (see docs/SETUP.md if not):');
-  say('  - Supabase database link   - Anthropic key   - Meta (WhatsApp) token, phone number id, app secret');
+  say('  - Supabase database link   - OpenRouter (or Anthropic) key   - Meta (WhatsApp) token, phone number id, app secret');
   say('  - Telegram bot token       - Google sheet links + service account key file\n');
   await ask('Press Enter to start ');
 
@@ -87,7 +87,19 @@ async function main() {
   // 4 ─ Keys
   step(4, 'Your keys (typing is hidden)');
   const secrets: Record<string, string> = {};
-  secrets.ANTHROPIC_API_KEY = await required('Anthropic API key: ', { secret: true });
+  say('AI service the bot will use to write replies:');
+  say('  1 = OpenRouter (one key, many models, some free)     2 = Anthropic (Claude directly)');
+  const provider = (await ask('Choose 1 or 2 (Enter = 1): ')) === '2' ? 'anthropic' : 'openrouter';
+  let llmModel: string, llmFast: string;
+  if (provider === 'openrouter') {
+    secrets.OPENROUTER_API_KEY = await required('OpenRouter API key: ', { secret: true });
+    say('Model name: copy it from openrouter.ai/models (looks like "vendor/model-name"). It must support tool calling.');
+    llmModel = (await ask('Main model (Enter = openrouter/free, lets OpenRouter pick a free one): ')) || 'openrouter/free';
+    llmFast = (await ask(`Cheaper model for small jobs (Enter = same as main): `)) || llmModel;
+  } else {
+    secrets.ANTHROPIC_API_KEY = await required('Anthropic API key: ', { secret: true });
+    llmModel = 'claude-sonnet-5-5'; llmFast = 'claude-haiku-5-5';
+  }
   say('\nMeta / WhatsApp (developers.facebook.com -> your app -> WhatsApp):');
   secrets.WHATSAPP_TOKEN = await required('  Access token: ', { secret: true });
   secrets.WHATSAPP_PHONE_NUMBER_ID = await required('  Phone number ID: ');
@@ -124,6 +136,9 @@ async function main() {
 
   // 5 ─ Deploy
   step(5, 'Put the bot online');
+  jsonc = readFileSync(WRANGLER, 'utf8');
+  jsonc = patchVar(patchVar(patchVar(jsonc, 'LLM_PROVIDER', provider), 'LLM_MODEL', llmModel), 'LLM_FAST_MODEL', llmFast);
+  writeFileSync(WRANGLER, jsonc);
   const dep = run(['deploy'], { capture: true });
   if (!dep.ok) throw new Error(`Deploy failed:\n${dep.out}`);
   const url = parseWorkerUrl(dep.out);

@@ -38,6 +38,13 @@ Nothing below has been run against the live service. Check each in the Meta test
 - Submitting the 4 follow-up templates to Meta (done in WhatsApp Manager).
 - Ongoing human steps: coexistence onboarding of +91 88514 72382, token rotation after the dev finishes, answering the spec's open questions (hours, handoff owner, trade pricing policy, delivery outside NCR, kids' set, first-message disclosure, retention).
 
+## AI provider: OpenRouter or Anthropic
+`LLM_PROVIDER` (`openrouter` or `anthropic`, default = whichever key is set, OpenRouter wins) with `LLM_MODEL` / `LLM_FAST_MODEL`. OpenRouter uses OpenAI-style chat completions, so `src/brain/openrouter.ts` translates the bot's Anthropic-shaped messages, tools, images and PDFs both ways (unit-tested, and exercised end to end through workerd against a mock). Tested with mocks only: **no real OpenRouter call has been made** (openrouter.ai is not reachable from the build environment), so the first real chat is the real test.
+- **Prompt quality depends on the model.** The prompt, the 3-bubble JSON output and the tool use were written for Claude. Weaker or free models may ignore the style rules, break the JSON, skip tools, or write poor Hindi/Hinglish. The clean-up pass and one JSON repair retry catch some of it. Run `npm run replay` (set the same provider env) and keep shadow mode on until 90% of drafts get 👍.
+- **Tool calling is required** (lookup_product, handoff...). Not every free model supports it; OpenRouter's `openrouter/free` router is meant to pick only models that can do what the request needs, but free models change often. Check `supported_parameters` includes `tools` on the model page.
+- **Free-model limits (from third-party articles, not verified on OpenRouter's site): about 20 requests/minute and 50 requests/day without credits, about 1,000/day after buying $10 of credits.** One customer reply takes 1-4 requests, so 50/day is only a few chats. For real use, add the $10 credit or pay for a cheap model.
+- Prompt caching (an Anthropic feature) is not used on OpenRouter, so per-message cost is higher than on Anthropic for the same model.
+
 ## Running on free tiers
 Checked against Cloudflare's current docs (Oct 2026): SQLite-backed Durable Objects (which `wrangler.jsonc` uses) and Hyperdrive are included in **Workers Free**; cron triggers are allowed (limit 5, we use 1).
 
@@ -53,6 +60,6 @@ Checked against Cloudflare's current docs (Oct 2026): SQLite-backed Durable Obje
 | Vercel Hobby | free | intended for non-commercial use; use Cloudflare Pages for the dashboard if that matters |
 
 **The one real risk is the 10 ms CPU cap.** Measured in Node with fake network clients (so excluding the real HTTP/TLS work): webhook 1.5 ms, status webhook 0.2 ms, full reply cycle with a tool call and two bubbles 3.7 ms (warm). The first run after a cold start measured 6 ms (webhook) and 43 ms (reply, JIT warm-up). Real Claude / WhatsApp / Postgres calls add some CPU on top. Cloudflare tolerates occasional overruns ("built-in flexibility"), and a killed timer is not lost: it stays in the Durable Object, the alarm retries, and the minute cron re-queues any overdue reply. But if replies are cut off repeatedly, check `npx wrangler tail` for "exceeded CPU time limit". **I could not measure this on real Cloudflare**, only locally.
-Mitigations if it happens: set `CLAUDE_MODEL` to `claude-haiku-5-5` (smaller outputs), lower the follow-up and mirror activity, or upgrade to Workers Paid ($5/month, 30 s CPU).
+Mitigations if it happens: use a smaller, faster model in `LLM_MODEL`, lower the follow-up and mirror activity, or upgrade to Workers Paid ($5/month, 30 s CPU).
 
-What is not free: Claude API usage (pay per message; set a monthly cap in the Anthropic Console, or run Haiku-only), and WhatsApp template messages if you enable follow-ups (replies inside 24 hours are free). Telegram, Google Sheets and Meta's Cloud API itself cost nothing.
+What is not free: the AI service (OpenRouter free models have tight daily limits, see above; paid models are billed per message, set a spend cap), and WhatsApp template messages if you enable follow-ups (replies inside 24 hours are free). Telegram, Google Sheets and Meta's Cloud API itself cost nothing.

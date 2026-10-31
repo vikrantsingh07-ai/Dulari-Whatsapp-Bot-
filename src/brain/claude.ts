@@ -17,13 +17,21 @@ export interface CallArgs {
   conversationId?: string | null;
 }
 
+/** What the rest of the bot needs from an AI provider. Implemented by ClaudeClient (Anthropic) and OpenRouterClient. */
+export interface LlmClient {
+  readonly mainModel: string;
+  readonly fastModel: string;
+  call(args: CallArgs): Promise<Anthropic.Messages.Message>;
+}
+
 export interface Pricing { inPerMtok?: number; outPerMtok?: number }
 
-export class ClaudeClient {
+export class ClaudeClient implements LlmClient {
   readonly mainModel: string;
   readonly fastModel: string;
   private sdk: Anthropic;
   constructor(private cfg: Config, sdk?: Anthropic) {
+    if (!cfg.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set');
     this.mainModel = cfg.CLAUDE_MODEL;
     this.fastModel = cfg.CLAUDE_FAST_MODEL;
     // we do our own retry-then-fallback, so the SDK must not retry for long

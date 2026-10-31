@@ -2,7 +2,7 @@ import type { Config } from './config.js';
 import type { WhatsAppClient } from './whatsapp/client.js';
 import type { Telegram } from './team/telegram.js';
 import type { BrainStore } from './brain/store.js';
-import type { ClaudeClient } from './brain/claude.js';
+import type { LlmClient } from './brain/claude.js';
 import type { ShopifyClient } from './shopify/client.js';
 import type { Jobs } from './jobs/types.js';
 import type { LeadsMirror } from './leads/mirror.js';
@@ -13,7 +13,7 @@ export interface App {
   wa: WhatsAppClient;
   tg: Telegram;
   brain: BrainStore;
-  claude: ClaudeClient;
+  claude: LlmClient;
   shopify: ShopifyClient | null;
   jobs: Jobs;
   mirror: LeadsMirror | null;
