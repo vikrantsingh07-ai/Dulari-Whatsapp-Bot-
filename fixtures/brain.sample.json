@@ -1,0 +1,36 @@
+{
+  "Products": [
+    ["name","website handle","other names","price","size","woods","finishes","lead time","in stock","photo urls","product url","notes","active"],
+    ["Pie Table","mesh-table","","SAMPLE 24000","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","3 weeks (SAMPLE)","yes","","https://dulari.design/products/mesh-table","SAMPLE ROW: replace in the real sheet","yes"],
+    ["Sundae Sofa","binge-sofa","","SAMPLE 64000","SAMPLE","solid wood frame (SAMPLE)","hand-rubbed oil (SAMPLE)","4 weeks (SAMPLE)","yes","","https://dulari.design/products/binge-sofa","SAMPLE ROW: replace in the real sheet","yes"],
+    ["Eve Chair","pipe-chair","","SAMPLE 12000","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","3 weeks (SAMPLE)","yes","","https://dulari.design/products/pipe-chair","SAMPLE ROW","yes"],
+    ["Eden Table","canti-table","","SAMPLE 38000","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","4 weeks (SAMPLE)","yes","","https://dulari.design/products/canti-table","SAMPLE ROW","yes"],
+    ["Dennis Stool","one-stool","","SAMPLE 6500","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","2 weeks (SAMPLE)","yes","","https://dulari.design/products/one-stool","SAMPLE ROW","yes"],
+    ["Flow Chair","hanging-chair","","SAMPLE 14000","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","3 weeks (SAMPLE)","yes","","https://dulari.design/products/hanging-chair","SAMPLE ROW","yes"],
+    ["Nova Table","pine-table","","SAMPLE 29000","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","3 weeks (SAMPLE)","yes","","https://dulari.design/products/pine-table","SAMPLE ROW","yes"],
+    ["Daily Table","mini-table","","SAMPLE 9500","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","2 weeks (SAMPLE)","yes","","https://dulari.design/products/mini-table","SAMPLE ROW","yes"],
+    ["Daily Chair","mini-chair","","SAMPLE 4500","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","2 weeks (SAMPLE)","yes","","https://dulari.design/products/mini-chair","SAMPLE ROW","yes"],
+    ["Binge Chair","binge-chair","","SAMPLE 11000","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","3 weeks (SAMPLE)","yes","","https://dulari.design/products/binge-chair","SAMPLE ROW","yes"],
+    ["Lean Stool","lean-stool","","SAMPLE 5500","SAMPLE","solid wood (SAMPLE)","hand-rubbed oil (SAMPLE)","2 weeks (SAMPLE)","yes","","https://dulari.design/products/lean-stool","SAMPLE ROW","yes"]
+  ],
+  "FAQ": [
+    ["question","answer"],
+    ["Where is the experience center?","SAMPLE: Gurugram. Replace with Akash's address and hours."],
+    ["I am looking for a job / I am a vendor","SAMPLE: Thanks for writing. Please email your details and the team will get back if there is a fit."]
+  ],
+  "Policies": [
+    ["delivery","payment","customisation","returns","care","warranty"],
+    ["SAMPLE: replace","SAMPLE: replace","SAMPLE: replace","SAMPLE: replace","SAMPLE: replace","SAMPLE: replace"]
+  ],
+  "Settings": [
+    ["key","value"],
+    ["studio_hours","Mon-Sat 10:00-19:00"],
+    ["handoff_reply_hours","2"],
+    ["BOT_ENABLED","TRUE"],
+    ["SHADOW_MODE","TRUE"]
+  ],
+  "Team": [
+    ["name","telegram handle","role","on duty"],
+    ["Akash","","owner","yes"]
+  ]
+}
