@@ -15,7 +15,8 @@
     "migrate": "tsx src/db/migrate.ts",
     "replay": "tsx test/replay/run.ts",
     "set-webhooks": "tsx scripts/set-telegram-webhook.ts",
-    "e2e": "tsx test/e2e/run.ts"
+    "e2e": "tsx test/e2e/run.ts",
+    "setup": "tsx scripts/setup.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

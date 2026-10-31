@@ -31,12 +31,7 @@ Vercel: small status dashboard that reads the Worker's /admin/status
 
 ## Deploy (Cloudflare Workers + Vercel)
 
-Everything runs on **free tiers** (see `docs/NOTES.md`, "Running on free tiers"): Cloudflare Workers Free (SQLite-backed Durable Objects, cron and Hyperdrive are all included), Supabase Free, Vercel Hobby. The only unavoidable cost is Claude API usage, billed per message. Do Phase 0 of the spec first (Meta app + system-user token, Brain and Leads sheets with a Google service account, Telegram bot and group, Anthropic key with a monthly spend cap).
-
-```bash
-npm install
-npx wrangler login
-```
+**Easiest:** follow `docs/SETUP.md`. After getting your keys ready it is one command, `npm run setup`, which does everything below for you. The manual steps are kept here for reference.
 
 1. **Database.** Create the Supabase project (Mumbai), then apply the schema once from your machine:
    ```bash
