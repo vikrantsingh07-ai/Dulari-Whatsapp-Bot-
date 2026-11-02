@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { currentHyperdriveId, extractSheetId, fillPassword, looksLikePostgres, needsPassword, parseHyperdriveId, parseWorkerUrl, patchHyperdriveId, pickGroupChatId, patchVar, randomToken } from '../scripts/setup-lib.js';
 import { readFileSync } from 'node:fs';
 import { listSubscribed, subscribeWaba } from '../scripts/subscribe-waba-lib.js';
+import { checkToken } from '../scripts/check-token-lib.js';
 
 describe('setup helpers', () => {
   it('extracts a sheet id from a link or bare id', () => {
@@ -60,5 +61,14 @@ describe('setup helpers', () => {
     expect(calls).toEqual(['GET 2194934211366490/subscribed_apps Bearer tok', 'POST 2194934211366490/subscribed_apps Bearer tok', 'GET 2194934211366490/subscribed_apps Bearer tok']);
     const bad = (async () => new Response(JSON.stringify({ error: { message: 'Invalid OAuth access token' } }), { status: 400 })) as any;
     await expect(listSubscribed(bad, 'x', 'w')).rejects.toThrow(/Invalid OAuth/);
+  });
+
+  it('explains why a WhatsApp token is refused', async () => {
+    const reply = (status: number, body: object) => (async () => new Response(JSON.stringify(body), { status })) as any;
+    expect(await checkToken(reply(200, { display_phone_number: '+1 555 189 8571', verified_name: 'Test Number' }), 't', '1')).toEqual({ ok: true, message: 'Token works. It can use +1 555 189 8571 (Test Number).' });
+    expect((await checkToken(reply(401, { error: { message: 'Error validating access token: Session has expired on Monday', code: 190 } }), 't', '1')).message).toMatch(/EXPIRED/);
+    expect((await checkToken(reply(400, { error: { message: 'Invalid OAuth access token - Cannot parse access token', code: 190 } }), 't', '1')).message).toMatch(/does not recognise/);
+    expect((await checkToken(reply(400, { error: { message: 'Unsupported get request. Object with ID does not exist, cannot be loaded due to missing permissions', code: 100 } }), 't', '1')).message).toMatch(/NOT allowed to use this phone number/);
+    expect((await checkToken(reply(500, {}), 't', '1')).ok).toBe(false);
   });
 });
