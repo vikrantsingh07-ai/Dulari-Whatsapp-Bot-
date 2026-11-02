@@ -28,6 +28,9 @@ describe('setup helpers', () => {
   });
   it('finds the worker url and the telegram group', () => {
     expect(parseWorkerUrl('Deployed dulari-whatsapp-agent triggers\n  https://dulari-whatsapp-agent.me.workers.dev\nCurrent Version ID')).toBe('https://dulari-whatsapp-agent.me.workers.dev');
+    const deployOutput = `Your Worker has access to the following bindings:\nenv.PUBLIC_URL ("https://REPLACE.workers.dev")   Environment Variable\nTotal Upload: 2240 KiB\nUploaded dulari-whatsapp-agent (3.1 sec)\nDeployed dulari-whatsapp-agent triggers (1.0 sec)\n  https://dulari-whatsapp-agent.jarvis-1.workers.dev\n  schedule: * * * * *`;
+    expect(parseWorkerUrl(deployOutput)).toBe('https://dulari-whatsapp-agent.jarvis-1.workers.dev');
+    expect(parseWorkerUrl('only https://REPLACE.workers.dev here')).toBeNull();
     expect(pickGroupChatId({ result: [{ message: { chat: { id: 5, type: 'private' } } }, { message: { chat: { id: -1001234, type: 'supergroup', title: 'Dulari Leads' } } }] })).toEqual({ id: '-1001234', title: 'Dulari Leads' });
     expect(pickGroupChatId({ result: [] })).toBeNull();
   });

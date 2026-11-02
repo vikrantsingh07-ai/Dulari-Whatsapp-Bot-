@@ -33,7 +33,10 @@ export function currentHyperdriveId(wranglerJsonc: string): string | null {
 }
 
 export function parseWorkerUrl(output: string): string | null {
-  return output.match(/https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.workers\.dev/i)?.[0] ?? null;
+  // The deploy output first lists the config values (which include the placeholder PUBLIC_URL), then the real address last.
+  const all = output.match(/https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.workers\.dev/gi) ?? [];
+  const real = all.filter((u) => !/replace/i.test(u));
+  return real.length ? real[real.length - 1]! : null;
 }
 
 /** Newest group/supergroup chat id from Telegram getUpdates. */
