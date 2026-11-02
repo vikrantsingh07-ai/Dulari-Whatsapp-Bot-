@@ -25,6 +25,8 @@ export function checkTurn(turn: Turn, brain: Brain, exp: Expect = {}): string[] 
     if (/\*\*|^#|^\s*[-•]\s|—|;/m.test(t)) fails.push(`markdown/em dash/semicolon in bubble ${i + 1}`);
   });
   const joined = texts.join(' ');
+  const leak = joined.match(/\b(the sheet|placeholder|knowledge base|lookup_product|SAMPLE)\b/i);
+  if (leak) fails.push(`leaks internal wording: "${leak[0]}"`);
   const questions = (joined.match(/\?/g) ?? []).length;
   if (questions > 1) fails.push(`${questions} questions (max 1)`);
   if (questions === 1 && !/\?\s*$/.test(texts[texts.length - 1] ?? '')) fails.push('the question is not in the last bubble');

@@ -6,6 +6,7 @@ import { findProducts } from './lookup.js';
 import { formatRs } from '../engine/format.js';
 import { replyByFor, type PendingHandoff } from '../engine/handoff.js';
 import type { Product } from './types.js';
+import { unsample } from './prompt.js';
 
 export const TOOLS: ToolDef[] = [
   {
@@ -64,8 +65,8 @@ export interface TurnState {
 }
 
 const productView = (p: Product) => ({
-  name: p.name, handle: p.handle, price: p.price > 0 ? formatRs(p.price) : null, size: p.size || null, woods: p.woods || null,
-  finishes: p.finishes || null, lead_time: p.leadTime || null, in_stock: p.inStock, link: p.productUrl || null, photos_available: p.photoUrls.length, notes: p.notes || null,
+  name: p.name, handle: p.handle, price: p.price > 0 ? formatRs(p.price) : null, size: unsample(p.size) || null, woods: unsample(p.woods) || null,
+  finishes: unsample(p.finishes) || null, lead_time: unsample(p.leadTime) || null, in_stock: p.inStock, link: p.productUrl || null, photos_available: p.photoUrls.length, notes: unsample(p.notes) || null,
 });
 
 export async function executeTool(app: App, ctx: { conv: Conversation; contact: Contact; turn: TurnState }, name: string, input: any): Promise<{ content: string; isError?: boolean }> {

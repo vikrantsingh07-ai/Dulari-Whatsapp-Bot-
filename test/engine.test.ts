@@ -109,6 +109,14 @@ describe('banned phrases', () => {
   });
 });
 
+describe('bot phrases from real chats', () => {
+  it('flags "thanks for your interest" and "how can I help you"', () => {
+    expect(findBanned("Hi Vikrant, thanks for your interest in the Daily Table.")).toEqual(['thanks for your interest']);
+    expect(findBanned('How can I help you with the Daily Table?')).toEqual(['How can I help you']);
+    expect(findBanned('Solid teak, 2 weeks. Which city?')).toEqual([]);
+  });
+});
+
 describe('quiet (rule 6) and opt-out', () => {
   it('detects acknowledgements', () => {
     expect(classifyAck(['ok'])).toBe('ack');

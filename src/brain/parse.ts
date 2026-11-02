@@ -83,7 +83,7 @@ const NUM_KEYS: Record<string, keyof Settings> = {
   handoff_reply_hours: 'handoffReplyHours', handoff_reply_window_hours: 'handoffReplyHours', batch_seconds: 'batchSeconds', batch_max_seconds: 'batchMaxSeconds',
   typing_base_ms: 'typingBaseMs', typing_ms_per_char: 'typingMsPerChar', typing_min_seconds: 'typingMinSeconds', typing_max_seconds: 'typingMaxSeconds',
   jitter: 'jitter', gap_min_seconds: 'gapMinSeconds', gap_max_seconds: 'gapMaxSeconds', reply_max_seconds: 'replyMaxSeconds',
-  human_mode_timeout_hours: 'humanTimeoutHours', human_timeout_hours: 'humanTimeoutHours', followup_days: 'followupDays', retention_months: 'retentionMonths',
+  human_mode_timeout_hours: 'humanTimeoutHours', human_timeout_hours: 'humanTimeoutHours', followup_days: 'followupDays', retention_months: 'retentionMonths', holding_line_seconds: 'holdingLineSeconds',
 };
 const BOOL_KEYS: Record<string, keyof Settings> = { bot_enabled: 'botEnabled', shadow_mode: 'shadowMode', shadow_during_studio_hours: 'shadowDuringStudioHours', only_live_numbers: 'onlyLiveNumbers' };
 

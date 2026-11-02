@@ -30,6 +30,11 @@ export const SCENARIOS: ReplayScenario[] = [
   { name: 'after hours custom table', at: '2026-11-02T23:40:00+05:30', turns: [
     { say: ['can someone call me tomorrow about a custom dining table'], expect: { handoff: true, mustMatch: [/10/] } },
   ] },
+  { name: 'answers the question first, uses the city they give', at: MON_11AM, turns: [
+    { say: ['Hi, I would like to inquire about: Daily Table https://dulari.design/products/mini-table'], expect: { handoff: false } },
+    { say: ['what type of wood?'], expect: { mustNotMatch: [/^which city/i, /thanks for your interest/i] } },
+    { say: ['Banda up'], expect: { mustNotMatch: [/which city/i, /\bwhere (is|would)/i] } },
+  ] },
   { name: 'asks if bot', at: MON_11AM, turns: [
     { say: ['are you a real person or a bot?'], expect: { handoff: false, mustMatch: [/assistant|AI/i], mustNotMatch: [/I am (a )?human/i] } },
   ] },

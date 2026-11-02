@@ -3,6 +3,7 @@ export const BANNED_PHRASES = [
   'Dear customer', 'Hope this helps', 'Is there anything else', 'I understand your concern',
   'As an AI', 'Thank you for reaching out', 'delighted', 'stunning', 'amazing', 'perfect for',
   'elevate', 'exquisite', 'premium quality',
+  'thanks for your interest', 'thank you for your interest', 'How can I help you', 'How may I assist', 'How can I assist', 'Happy to help',
   // hype words from the system prompt's "never use" list
   'luxurious',
 ];

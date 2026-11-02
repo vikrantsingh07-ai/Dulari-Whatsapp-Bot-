@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import fixture from '../fixtures/brain.sample.json' with { type: 'json' };
 import { parseBrain } from '../src/brain/parse.js';
 import { findProducts, handleFromUrl, parseEnquire } from '../src/brain/lookup.js';
-import { renderKnowledge } from '../src/brain/prompt.js';
+import { renderKnowledge, unsample } from '../src/brain/prompt.js';
+import { DEFAULT_SETTINGS } from '../src/brain/types.js';
 
 
 describe('brain parsing', () => {
@@ -57,6 +58,30 @@ describe('brain parsing', () => {
     expect(r.errors.join('\n')).toMatch(/batch_seconds/);
     expect(r.errors.join('\n')).toMatch(/shadow_mode/);
     expect(r.errors.join('\n')).toMatch(/studio_hours/);
+  });
+});
+
+describe('placeholder text never reaches the model', () => {
+  const b = parseBrain({
+    products: [['name', 'handle', 'price', 'woods', 'finishes', 'lead time', 'notes'], ['Daily Table', 'mini-table', '9500', 'solid wood (SAMPLE)', 'hand-rubbed oil', '2 weeks (SAMPLE)', 'SAMPLE ROW']],
+    faq: [['question', 'answer'], ['Where?', 'SAMPLE Gurugram'], ['Parking?', 'Yes, free']],
+    policies: [['topic', 'text'], ['delivery', 'SAMPLE replace'], ['care', 'Wipe with a dry cloth']],
+    settings: [['key', 'value'], ['studio_hours', 'Mon-Sat 10:00-19:00'], ['holding_line_seconds', '0']],
+  }).brain!;
+  it('drops SAMPLE cells from the knowledge base, keeps real ones', () => {
+    const kb = renderKnowledge(b);
+    expect(kb).not.toMatch(/SAMPLE/);
+    expect(kb).toContain('finishes hand-rubbed oil');
+    expect(kb).not.toContain('woods');
+    expect(kb).toContain('Parking?');
+    expect(kb).not.toContain('Gurugram');
+    expect(kb).toContain('care: Wipe with a dry cloth');
+    expect(unsample('solid wood (SAMPLE)')).toBe('');
+    expect(unsample('solid teak')).toBe('solid teak');
+  });
+  it('reads holding_line_seconds (0 turns the filler line off)', () => {
+    expect(b.settings.holdingLineSeconds).toBe(0);
+    expect(DEFAULT_SETTINGS.holdingLineSeconds).toBe(15);
   });
 });
 

@@ -16,6 +16,10 @@ describe('replay checks', () => {
     expect(checkTurn(turn(['Where? ok', 'Fine.']), brain).join()).toMatch(/not in the last/);
     expect(checkTurn(turn(['a', 'b', 'c', 'd']), brain).join()).toMatch(/4 bubbles/);
   });
+  it('flags leaked internal wording', () => {
+    expect(checkTurn(turn(['The sheet shows solid wood (SAMPLE) as a placeholder.']), brain).join()).toMatch(/leaks internal wording/);
+    expect(checkTurn(turn(['I will check the wood with Akash.']), brain)).toEqual([]);
+  });
   it('checks expectations', () => {
     expect(checkTurn(turn(['hi']), brain, { handoff: true })).toContain('expected a handoff');
     expect(checkTurn(turn([], { reaction: '🙏' }), brain, { noText: true, reaction: true })).toEqual([]);

@@ -101,9 +101,10 @@ async function runLocked(app: App, conversationId: string): Promise<void> {
 
   // 7. Read + typing (only when a reply will follow, and never in shadow mode)
   const stopTyping = shadow ? () => {} : startTyping(app, lastPending.wa_message_id);
-  const interimTimer = shadow ? null : setTimeout(async () => {
+  const interimMs = settings.holdingLineSeconds * 1000;
+  const interimTimer = shadow || interimMs <= 0 ? null : setTimeout(async () => {
     try { await sendBubble(app, conv, contact, { kind: 'text', text: 'One sec, checking that.' }, { interim: true }); } catch { /* cosmetic */ }
-  }, 8000);
+  }, interimMs);
 
   let draft: ReplyOutput | null = null;
   const turn: TurnState = { photos: [], handoff: null, shadow };

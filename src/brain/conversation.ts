@@ -89,7 +89,7 @@ export async function buildConversation(app: App, conv: Conversation, contact: C
         if (mb) { blocks.push(mb); imagesAttached++; }
       }
       push('user', blocks);
-    } else if (m.type === 'reaction') {
+    } else if (m.type === 'reaction' || m.type === 'interim') {
       continue;
     } else {
       const text = m.type === 'image' ? `[photo sent] ${m.text ?? ''}`.trim() : m.text ?? `[${m.type}]`;

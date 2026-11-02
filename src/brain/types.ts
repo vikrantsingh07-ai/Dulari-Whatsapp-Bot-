@@ -36,6 +36,8 @@ export interface Settings {
   followupTemplate: string;
   followupLanguage: string;
   retentionMonths: number;
+  /** send "One sec, checking that." only if the reply has taken this many seconds; 0 = never send it */
+  holdingLineSeconds: number;
   botEnabled: boolean;
   shadowMode: boolean;
   shadowDuringStudioHours: boolean;
@@ -64,6 +66,7 @@ export const DEFAULT_SETTINGS: Settings = {
   followupTemplate: '',
   followupLanguage: 'en',
   retentionMonths: 12,
+  holdingLineSeconds: 15,
   botEnabled: true,
   shadowMode: true, // safe default: nothing reaches customers until switched off
   shadowDuringStudioHours: false,
