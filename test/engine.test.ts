@@ -162,6 +162,17 @@ describe('modes', () => {
     expect(effectiveMode({ conversationMode: 'auto', settings: st, hours, now })).toBe('shadow');
     expect(effectiveMode({ conversationMode: 'auto', settings: st, hours, now: new Date('2026-11-02T17:00:00Z') })).toBe('auto');
   });
+  it('live_numbers get real replies during shadow mode; only_live_numbers ignores everyone else', () => {
+    const shadow = { ...DEFAULT_SETTINGS, shadowMode: true, liveNumbers: ['919876543210'] };
+    expect(effectiveMode({ conversationMode: 'auto', settings: shadow, hours, now, waId: '919876543210' })).toBe('auto');
+    expect(effectiveMode({ conversationMode: 'auto', settings: shadow, hours, now, waId: '911111111111' })).toBe('shadow');
+    const pilot = { ...shadow, onlyLiveNumbers: true };
+    expect(effectiveMode({ conversationMode: 'auto', settings: pilot, hours, now, waId: '911111111111' })).toBe('off');
+    expect(effectiveMode({ conversationMode: 'auto', settings: pilot, hours, now, waId: '919876543210' })).toBe('auto');
+    expect(effectiveMode({ conversationMode: 'human', settings: pilot, hours, now, waId: '919876543210' })).toBe('human');
+    expect(effectiveMode({ conversationMode: 'auto', settings: { ...pilot, botEnabled: false }, hours, now, waId: '919876543210' })).toBe('off');
+    expect(effectiveMode({ conversationMode: 'auto', settings: { ...DEFAULT_SETTINGS, shadowMode: true, onlyLiveNumbers: true }, hours, now, waId: '911111111111' })).toBe('shadow'); // empty list never silences everyone
+  });
   it('human mode expires after 48h except trade/project', () => {
     const base = { modeChangedAt: new Date('2026-11-01T00:00:00Z'), lastHumanAt: null, now: new Date('2026-11-03T01:00:00Z'), timeoutHours: 48 };
     expect(humanModeExpired({ ...base, leadType: 'home' })).toBe(true);

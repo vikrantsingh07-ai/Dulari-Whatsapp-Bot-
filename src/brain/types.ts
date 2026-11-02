@@ -39,6 +39,10 @@ export interface Settings {
   botEnabled: boolean;
   shadowMode: boolean;
   shadowDuringStudioHours: boolean;
+  /** numbers (digits with country code) the bot answers for real, even while shadow mode is on */
+  liveNumbers: string[];
+  /** when true (and liveNumbers is not empty) every other customer is ignored: no drafts, no replies */
+  onlyLiveNumbers: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -63,6 +67,8 @@ export const DEFAULT_SETTINGS: Settings = {
   botEnabled: true,
   shadowMode: true, // safe default: nothing reaches customers until switched off
   shadowDuringStudioHours: false,
+  liveNumbers: [],
+  onlyLiveNumbers: false,
 };
 
 export interface Brain {

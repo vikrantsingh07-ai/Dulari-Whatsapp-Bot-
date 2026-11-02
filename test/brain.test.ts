@@ -44,6 +44,14 @@ describe('brain parsing', () => {
     expect(r.brain).toBeNull();
     expect(r.errors).toContain('Products row 4: name is empty');
   });
+  it('reads live_numbers in any phone format and guards only_live_numbers', () => {
+    const base = { products: good.products, settings: [['key', 'value'], ['studio_hours', 'Mon-Sat 10:00-19:00'], ['live_numbers', '+91 98765 43210, 9123456789\n919000000000'], ['only_live_numbers', 'TRUE']] };
+    const r = parseBrain(base);
+    expect(r.errors).toEqual([]);
+    expect(r.brain!.settings).toMatchObject({ liveNumbers: ['919876543210', '919123456789', '919000000000'], onlyLiveNumbers: true });
+    expect(parseBrain({ ...base, settings: [['key', 'value'], ['studio_hours', 'Mon-Sat 10:00-19:00'], ['live_numbers', '12ab'], ['only_live_numbers', 'TRUE']] }).errors.join()).toMatch(/cannot read.*12ab/);
+    expect(parseBrain({ ...base, settings: [['key', 'value'], ['studio_hours', 'Mon-Sat 10:00-19:00'], ['only_live_numbers', 'TRUE']] }).errors.join()).toMatch(/would ignore everyone/);
+  });
   it('rejects bad settings', () => {
     const r = parseBrain({ ...good, settings: [['key', 'value'], ['batch_seconds', 'fast'], ['SHADOW_MODE', 'maybe'], ['studio_hours', 'whenever']] });
     expect(r.errors.join('\n')).toMatch(/batch_seconds/);

@@ -56,7 +56,7 @@ async function runLocked(app: App, conversationId: string): Promise<void> {
   if (!conv.reply_due_at) return;
   if (conv.reply_due_at.getTime() > now.getTime() + 1000) return;
 
-  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings, hours, now, forceLive: isTestWaId(contact.wa_id) });
+  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings, hours, now, forceLive: isTestWaId(contact.wa_id), waId: contact.wa_id });
   if (mode === 'human' || mode === 'off' || contact.opted_out || contact.muted) {
     await clearDue(conv.id, claimedAt);
     return;

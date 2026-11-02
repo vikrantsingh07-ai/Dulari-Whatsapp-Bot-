@@ -56,7 +56,7 @@ export async function handleInbound(app: App, m: InboundMessage): Promise<void> 
   if (m.text && parseEnquire(m.text)) await setLeadSourceIfEmpty(contact.id, 'website_enquire');
 
   const brain = app.brain.get();
-  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings: brain.settings, hours: app.brain.getHours(), now: app.now(), forceLive: isTestWaId(contact.wa_id) });
+  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings: brain.settings, hours: app.brain.getHours(), now: app.now(), forceLive: isTestWaId(contact.wa_id), waId: contact.wa_id });
   if (mode === 'human') { await maybeHoldingLine(app, conv, contact.wa_id); return; }
   if (mode === 'off' || contact.opted_out || contact.muted) return;
 

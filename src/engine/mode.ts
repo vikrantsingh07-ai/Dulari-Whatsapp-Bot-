@@ -15,13 +15,16 @@ export function effectiveMode(opts: {
   now: Date;
   /** chat-tester customers answer for real even while the whole bot is in shadow mode */
   forceLive?: boolean;
+  /** the customer's number, matched against the live_numbers setting */
+  waId?: string;
 }): BotMode {
   const { conversationMode, settings } = opts;
   if (!settings.botEnabled) return 'off';
   if (conversationMode === 'off') return 'off';
   if (conversationMode === 'human') return 'human';
   if (conversationMode === 'shadow') return 'shadow';
-  if (opts.forceLive) return 'auto';
+  if (opts.forceLive || (opts.waId && settings.liveNumbers.includes(opts.waId))) return 'auto';
+  if (settings.onlyLiveNumbers && settings.liveNumbers.length) return 'off'; // pilot: everyone else is ignored
   if (settings.shadowMode) return 'shadow';
   if (settings.shadowDuringStudioHours && isOpenNow(opts.hours, opts.now)) return 'shadow';
   return 'auto';

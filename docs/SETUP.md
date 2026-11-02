@@ -86,3 +86,19 @@ npm run chat
 Type like a customer ("Hi, I would like to inquire about: Daily Table"). The bot answers with the real AI, your Brain sheet, product photos and handoff rules. Nothing is sent on WhatsApp, and it works even with an expired Meta token and with shadow mode on. Commands: `/new` starts a new customer, `/quit` exits. A handoff (quote, 5+ pieces, complaint) sends the real alert to your Telegram group, and then the bot stays silent for that test customer, exactly like with a real one.
 
 The same chat is a panel at the bottom of the dashboard page.
+
+## Pilot: only my phones get replies, real leads are ignored
+
+In the Brain sheet, **Settings** tab, add two rows (the template has them):
+
+| key | value |
+|---|---|
+| `live_numbers` | your test phones with country code, separated by commas, e.g. `919876543210, 919123456789` |
+| `only_live_numbers` | `TRUE` |
+
+- Listed phones get **real replies on WhatsApp**, even while `SHADOW_MODE` is TRUE.
+- Everyone else is **ignored completely**: no reply, no Telegram draft. Their messages are still stored (so the bot knows them later) and your team keeps answering from the phone as usual.
+- To start the shadow week with real leads, set `only_live_numbers` to `FALSE`. Real leads then get **drafts in Telegram only**, and your listed phones still get real replies.
+- To go fully live, set `SHADOW_MODE` to `FALSE`, empty `live_numbers`, and set `only_live_numbers` to `FALSE`.
+
+The bot re-reads the sheet every 10 minutes. A sheet mistake (for example a phone number it cannot read) is rejected, the old settings stay, and Telegram tells you which row.

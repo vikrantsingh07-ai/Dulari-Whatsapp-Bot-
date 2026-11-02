@@ -61,7 +61,7 @@ Local development: copy `.dev.vars.example` to `.dev.vars`, point `CLOUDFLARE_HY
 - **Products**: `name`, `website handle`, `other names`, `price`, `size`, `woods`, `finishes`, `lead time`, `in stock`, `photo urls`, `product url`, `notes`, `active`
 - **FAQ**: `question`, `answer`
 - **Policies**: `topic`, `text` (or one row with the topics as headers)
-- **Settings** (`key`, `value`): `studio_hours` (e.g. `Mon-Sat 10:00-19:00`), `holidays` (YYYY-MM-DD list), `handoff_reply_hours`, `batch_seconds`, `batch_max_seconds`, `typing_ms_per_char`, `human_mode_timeout_hours`, `BOT_ENABLED`, `SHADOW_MODE`, `shadow_during_studio_hours`, `followup_template`, `followup_days`, ...
+- **Settings** (`key`, `value`): `studio_hours` (e.g. `Mon-Sat 10:00-19:00`), `holidays` (YYYY-MM-DD list), `handoff_reply_hours`, `batch_seconds`, `batch_max_seconds`, `typing_ms_per_char`, `human_mode_timeout_hours`, `BOT_ENABLED`, `SHADOW_MODE`, `live_numbers` (phones that get real replies even in shadow mode), `only_live_numbers` (TRUE = ignore everyone else), `shadow_during_studio_hours`, `followup_template`, `followup_days`, ...
 - **Team**: `name`, `telegram handle`, `role`, `on duty`
 
 ## Tests

@@ -385,3 +385,27 @@ run('chat tester (fake customer, no WhatsApp)', () => {
     expect(await query('select 1 from contacts')).toHaveLength(0);
   });
 });
+
+run('pilot: only listed numbers get replies', () => {
+  beforeAll(setupDb);
+  afterAll(teardownDb);
+  beforeEach(async () => { await query('truncate contacts cascade'); });
+
+  it('answers listed phones for real, ignores real leads completely, keeps storing their messages', async () => {
+    const t = makeApp({ settings: [['key', 'value'], ['studio_hours', 'Mon-Sat 10:00-19:00'], ['SHADOW_MODE', 'TRUE'], ['live_numbers', '+91 99999 00001'], ['only_live_numbers', 'TRUE']] });
+    await handleInbound(t.app, inbound('hello from a real lead', '919111111111'));
+    await handleInbound(t.app, inbound('daily table price?', '919999900001'));
+    const stranger = (await getConversationByContactWa('919111111111'))!;
+    const mine = (await getConversationByContactWa('919999900001'))!;
+    expect(stranger.reply_due_at).toBeNull(); // nothing scheduled, no draft, no reply
+    expect(mine.reply_due_at).not.toBeNull();
+    expect(Number((await query('select count(*) n from messages'))[0].n)).toBe(2); // both stored
+    t.clock.advance(9000);
+    t.script.push(reply({ messages: ['Rs 9500, solid teak.'] }));
+    await runReply(t.app, mine.id);
+    expect(t.sent.filter((s) => s.kind === 'text').map((s) => s.to)).toEqual(['919999900001']); // only to the listed phone
+    expect(t.tgMessages.some((m) => m.text.includes('Draft'))).toBe(false); // listed phone is live, not a draft
+    await runReply(t.app, stranger.id);
+    expect(t.claudeCalls).toHaveLength(1);
+  });
+});

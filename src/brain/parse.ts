@@ -85,12 +85,20 @@ const NUM_KEYS: Record<string, keyof Settings> = {
   jitter: 'jitter', gap_min_seconds: 'gapMinSeconds', gap_max_seconds: 'gapMaxSeconds', reply_max_seconds: 'replyMaxSeconds',
   human_mode_timeout_hours: 'humanTimeoutHours', human_timeout_hours: 'humanTimeoutHours', followup_days: 'followupDays', retention_months: 'retentionMonths',
 };
-const BOOL_KEYS: Record<string, keyof Settings> = { bot_enabled: 'botEnabled', shadow_mode: 'shadowMode', shadow_during_studio_hours: 'shadowDuringStudioHours' };
+const BOOL_KEYS: Record<string, keyof Settings> = { bot_enabled: 'botEnabled', shadow_mode: 'shadowMode', shadow_during_studio_hours: 'shadowDuringStudioHours', only_live_numbers: 'onlyLiveNumbers' };
+
+/** "+91 98765 43210", "9876543210" or "919876543210" -> "919876543210" (10 digits are assumed to be Indian). */
+export function normalisePhone(raw: string): string | null {
+  const d = raw.replace(/\D/g, '');
+  if (d.length === 10) return `91${d}`;
+  return d.length >= 11 && d.length <= 15 ? d : null;
+}
 const STR_KEYS: Record<string, keyof Settings> = { studio_hours: 'studioHours', holidays: 'holidays', followup_template: 'followupTemplate', followup_language: 'followupLanguage' };
 
 export function parseSettings(t: Table | undefined, errors: string[]): Settings {
   const s: Settings = { ...DEFAULT_SETTINGS };
   for (const { n, r } of rows(t)) {
+    const n_ = n;
     const k = key(pick(r, 'key', 'setting', 'name'));
     const v = pick(r, 'value');
     if (!k) continue;
@@ -102,11 +110,19 @@ export function parseSettings(t: Table | undefined, errors: string[]): Settings 
       if (truthy(v)) (s as any)[BOOL_KEYS[k]!] = true;
       else if (falsy(v)) (s as any)[BOOL_KEYS[k]!] = false;
       else errors.push(`Settings row ${n}: ${k} must be TRUE or FALSE, got "${v}"`);
+    } else if (k === 'live_numbers') {
+      const nums: string[] = [];
+      for (const part of v.split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean)) {
+        const n = normalisePhone(part);
+        if (n) nums.push(n); else errors.push(`Settings row ${n_}: live_numbers has a number I cannot read: "${part}"`);
+      }
+      s.liveNumbers = [...new Set(nums)];
     } else if (k in STR_KEYS) (s as any)[STR_KEYS[k]!] = v;
   }
   if (s.batchMaxSeconds < s.batchSeconds) errors.push('Settings: batch_max_seconds must be >= batch_seconds');
   if (s.typingMaxSeconds < s.typingMinSeconds) errors.push('Settings: typing_max_seconds must be >= typing_min_seconds');
   if (s.jitter > 0.5) errors.push('Settings: jitter must be 0.5 or less');
+  if (s.onlyLiveNumbers && !s.liveNumbers.length) errors.push('Settings: only_live_numbers is TRUE but live_numbers is empty, so the bot would ignore everyone');
   try { parseStudioHours(s.studioHours, s.holidays); } catch (e) { errors.push(`Settings: ${(e as Error).message}`); }
   return s;
 }
