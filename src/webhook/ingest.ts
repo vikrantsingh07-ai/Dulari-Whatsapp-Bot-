@@ -47,8 +47,9 @@ export async function handleInbound(app: App, m: InboundMessage): Promise<void> 
     conversationId: conv.id, waMessageId: m.waMessageId, direction: 'in', author: 'customer', type: m.type, text: storedText(m),
     mediaId: m.mediaId, mimeType: m.mimeType, filename: m.filename, quotedId: m.quotedId, referral: m.referral,
   });
-  if (!row) return; // Meta resent a webhook we already have
-  if (!REPLYABLE.has(m.type)) return;
+  const who = `***${m.from.slice(-4)}`; // last 4 digits only in logs
+  if (!row) { console.log(`[inbound] ${who} duplicate, ignored`); return; } // Meta resent a webhook we already have
+  if (!REPLYABLE.has(m.type)) { console.log(`[inbound] ${who} type ${m.type}, stored only`); return; }
 
   await touchInbound(conv.id, new Date());
   await cancelFollowups(conv.id, 'customer_replied');
@@ -57,8 +58,13 @@ export async function handleInbound(app: App, m: InboundMessage): Promise<void> 
 
   const brain = app.brain.get();
   const mode = effectiveMode({ conversationMode: conv.bot_mode, settings: brain.settings, hours: app.brain.getHours(), now: app.now(), forceLive: isTestWaId(contact.wa_id), waId: contact.wa_id });
-  if (mode === 'human') { await maybeHoldingLine(app, conv, contact.wa_id); return; }
-  if (mode === 'off' || contact.opted_out || contact.muted) return;
+  if (mode === 'human') { console.log(`[inbound] ${who} chat is in human mode, bot silent`); await maybeHoldingLine(app, conv, contact.wa_id); return; }
+  if (mode === 'off' || contact.opted_out || contact.muted) {
+    const why = !brain.settings.botEnabled ? 'BOT_ENABLED is FALSE' : contact.opted_out ? 'opted out' : contact.muted ? 'muted' : brain.settings.onlyLiveNumbers ? 'not in live_numbers (only_live_numbers is TRUE)' : 'mode off';
+    console.log(`[inbound] ${who} ignored: ${why}`);
+    return;
+  }
+  console.log(`[inbound] ${who} mode ${mode}, reply scheduled`);
 
   const { dueAt, firstPendingAt } = computeReplyDue({
     now: app.now(), firstPendingAt: conv.reply_due_at ? conv.reply_first_at : null,

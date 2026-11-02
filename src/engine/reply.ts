@@ -64,6 +64,7 @@ async function runLocked(app: App, conversationId: string): Promise<void> {
   const pending = await pendingInbound(conv.id);
   if (!pending.length) { await clearDue(conv.id, claimedAt); return; }
   const shadow = mode === 'shadow';
+  console.log(`[reply] ***${contact.wa_id.slice(-4)} mode ${mode}, ${pending.length} message(s) in the batch`);
   const lastPending = pending[pending.length - 1]!;
   const seenId = lastPending.id;
   const customerText = pending.map((m) => m.text ?? `[${m.type}]`).join(' / ');

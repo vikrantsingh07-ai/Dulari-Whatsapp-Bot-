@@ -41,11 +41,17 @@ export function buildServer(app: App, rt: Runtime): Hono {
 
   server.post('/webhook', async (c) => {
     const raw = await c.req.text();
-    if (!verifySignature(raw, c.req.header('x-hub-signature-256'), app.cfg.WHATSAPP_APP_SECRET)) return c.text('invalid signature', 401);
+    if (!verifySignature(raw, c.req.header('x-hub-signature-256'), app.cfg.WHATSAPP_APP_SECRET)) {
+      // Most common cause: the stored WHATSAPP_APP_SECRET is not Meta's current App secret (e.g. it was reset after setup).
+      console.warn('[webhook] REJECTED: signature does not match WHATSAPP_APP_SECRET');
+      return c.text('invalid signature', 401);
+    }
     let body: unknown;
     try { body = JSON.parse(raw); } catch { return c.text('bad json', 400); }
+    const events = parseWebhook(body);
+    console.log(`[webhook] received ${events.map((e) => e.kind).join(',') || 'nothing useful'}`);
     // Store + schedule, but never keep Meta waiting: ack within ~1.5s, the work keeps going after the response.
-    const work = rt.db(() => handleEvents(app, parseWebhook(body))).catch((e) => console.error('[webhook]', e));
+    const work = rt.db(() => handleEvents(app, events)).catch((e) => console.error('[webhook]', e));
     rt.waitUntil(work);
     await Promise.race([work, new Promise((r) => setTimeout(r, 1500))]);
     return c.text('ok');
