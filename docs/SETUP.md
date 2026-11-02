@@ -64,3 +64,13 @@ When the drafts look good (the spec wants 90% 👍 over 50 drafts), set `SHADOW_
 ## If something goes wrong
 
 Run `npm run setup` again: it skips what is already done. If it says "not healthy", the usual cause is that the Brain sheet isn't shared with the service account email, or a tab name is spelled differently.
+
+## Brain sheet in 2 minutes (use the ready-made file)
+
+1. Download `docs/brain-template.xlsx` from this project (it is already in your `Dulari-Whatsapp-Bot-` folder, in the `docs` folder).
+2. Go to **drive.google.com** -> **New** -> **File upload** -> pick `brain-template.xlsx`.
+3. Open the uploaded file, then **File -> Save as Google Sheets**. Rename it **Dulari Bot Brain**.
+4. It already has the 5 tabs (`Products`, `FAQ`, `Policies`, `Settings`, `Team`) and shadow mode ON.
+5. **The prices and details in it are SAMPLES, not real.** Akash must replace them before the bot answers real customers.
+6. Share the sheet with the service account email (ends in `iam.gserviceaccount.com`) as **Viewer**.
+7. For the Leads sheet: create a blank Google Sheet named **Dulari Leads**, rename its first tab to `Leads`, and share it with the same email as **Editor**.
