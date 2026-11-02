@@ -25,6 +25,8 @@
   button { padding:10px 14px; border-radius:8px; border:0; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
   button.link { background:none; color:var(--mute); font-weight:400; padding:0; text-decoration:underline; }
   .hide { display:none; } .err { color:var(--bad); font-size:13px; }
+  .b { max-width:80%; padding:8px 12px; border-radius:14px; white-space:pre-wrap; word-break:break-word; font-size:14px; }
+  .me { align-self:flex-end; background:var(--accent); color:#fff; } .bot { align-self:flex-start; background:var(--bg); border:1px solid var(--line); } .sys { align-self:center; color:var(--mute); font-size:12px; }
 </style>
 </head>
 <body>
@@ -51,6 +53,15 @@
     <h2>Open handoffs</h2><div class="scroll"><table id="handoffs"></table></div>
     <h2>Shadow-week drafts (last 14 days)</h2><div class="grid" id="drafts"></div>
     <h2>Claude usage (last 7 days, IST)</h2><div class="scroll"><table id="llm"></table></div>
+
+    <h2>Test chat (talk to the bot as a customer, nothing is sent on WhatsApp)</h2>
+    <div class="card">
+      <div id="chatlog" style="min-height:140px;max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+      <form id="chatform" style="grid-template-columns:1fr auto auto;max-width:none">
+        <input id="chatinput" placeholder="Type like a customer, e.g. Hi, I would like to inquire about: Daily Table" autocomplete="off">
+        <button>Send</button><button type="button" class="link" id="chatnew">New customer</button>
+      </form>
+    </div>
   </section>
 </main>
 <script>
@@ -98,6 +109,22 @@ function render(s) {
 }
 $('form').addEventListener('submit', (e) => { e.preventDefault(); store.set('dulari_url', $('url').value.trim()); store.set('dulari_token', $('token').value.trim()); load(); });
 $('logout').addEventListener('click', () => { store.del('dulari_url'); store.del('dulari_token'); show(false); $('updated').textContent = 'Not connected'; });
+let chatId = String(Math.floor(Math.random() * 9e6) + 1e6);
+const bubble = (cls, text) => { const d = document.createElement('div'); d.className = 'b ' + cls; d.textContent = text; $('chatlog').appendChild(d); $('chatlog').scrollTop = 1e9; return d; };
+async function chat(body) {
+  const r = await fetch(store.get('dulari_url').replace(/\/$/, '') + '/admin/chat', { method: 'POST', headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + store.get('dulari_token') }, body: JSON.stringify({ id: chatId, ...body }) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'Bot returned ' + r.status); return j;
+}
+$('chatform').addEventListener('submit', async (e) => {
+  e.preventDefault(); const text = $('chatinput').value.trim(); if (!text) return; $('chatinput').value = '';
+  bubble('me', text); const wait = bubble('sys', 'thinking...');
+  try {
+    const r = await chat({ text }); wait.remove();
+    for (const m of r.replies || []) bubble('bot', m.kind === 'text' ? m.text : m.kind === 'image' ? '[photo] ' + (m.caption || '') : '[reaction ' + m.emoji + ']');
+    if (r.note) bubble('sys', r.note);
+  } catch (err) { wait.remove(); bubble('sys', 'Problem: ' + err.message); }
+});
+$('chatnew').addEventListener('click', async () => { chatId = String(Math.floor(Math.random() * 9e6) + 1e6); $('chatlog').innerHTML = ''; bubble('sys', 'New customer. The bot remembers nothing about the old chat.'); });
 $('url').value = store.get('dulari_url') || ''; load();
 </script>
 </body>

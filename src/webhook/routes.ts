@@ -7,6 +7,7 @@ import { handleEvents } from './ingest.js';
 import { handleTelegramUpdate } from '../team/commands.js';
 import { query } from '../db/client.js';
 import { adminStatus } from '../admin.js';
+import { testChat } from '../admin-chat.js';
 
 const safeEq = (a: string, b: string) => {
   const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b);
@@ -62,9 +63,22 @@ export function buildServer(app: App, rt: Runtime): Hono {
   const cors = (c: any) => {
     const origin = app.cfg.DASHBOARD_ORIGIN;
     if (origin) { c.header('Access-Control-Allow-Origin', origin); c.header('Vary', 'Origin'); }
-    c.header('Access-Control-Allow-Headers', 'Authorization'); c.header('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    c.header('Access-Control-Allow-Headers', 'Authorization, Content-Type'); c.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  };
+  const authed = (c: any) => {
+    const token = (c.req.header('authorization') ?? '').replace(/^Bearer\s+/i, '');
+    return !!app.cfg.ADMIN_TOKEN && safeEq(token, app.cfg.ADMIN_TOKEN);
   };
   server.options('/admin/status', (c) => { cors(c); return c.body(null, 204); });
+  server.options('/admin/chat', (c) => { cors(c); return c.body(null, 204); });
+  // Chat tester: talk to the bot as a fake customer (no WhatsApp involved).
+  server.post('/admin/chat', async (c) => {
+    cors(c);
+    if (!authed(c)) return c.json({ error: 'unauthorized' }, 401);
+    const body: any = await c.req.json().catch(() => ({}));
+    try { return c.json(await rt.db(() => testChat(app, { id: String(body.id ?? '1'), text: String(body.text ?? ''), reset: !!body.reset }))); }
+    catch (e) { return c.json({ error: (e as Error).message }, 500); }
+  });
   server.get('/admin/status', async (c) => {
     cors(c);
     const token = (c.req.header('authorization') ?? '').replace(/^Bearer\s+/i, '');

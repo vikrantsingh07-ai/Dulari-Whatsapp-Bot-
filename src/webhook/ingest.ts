@@ -5,7 +5,7 @@ import {
   type Conversation,
 } from '../db/repo.js';
 import { computeReplyDue } from '../engine/batching.js';
-import { effectiveMode } from '../engine/mode.js';
+import { effectiveMode, isTestWaId } from '../engine/mode.js';
 import { parseEnquire } from '../brain/lookup.js';
 import { TEMPORARY_ERROR_CODES } from '../whatsapp/client.js';
 import type { EchoMessage, HistoryMessage, InboundMessage, StatusEvent, WaEvent } from '../whatsapp/events.js';
@@ -56,7 +56,7 @@ export async function handleInbound(app: App, m: InboundMessage): Promise<void> 
   if (m.text && parseEnquire(m.text)) await setLeadSourceIfEmpty(contact.id, 'website_enquire');
 
   const brain = app.brain.get();
-  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings: brain.settings, hours: app.brain.getHours(), now: app.now() });
+  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings: brain.settings, hours: app.brain.getHours(), now: app.now(), forceLive: isTestWaId(contact.wa_id) });
   if (mode === 'human') { await maybeHoldingLine(app, conv, contact.wa_id); return; }
   if (mode === 'off' || contact.opted_out || contact.muted) return;
 

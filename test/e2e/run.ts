@@ -81,6 +81,15 @@ try {
   check('admin status needs the token', (await fetch(`${base}/admin/status`)).status === 401);
   const st: any = await (await fetch(`${base}/admin/status`, { headers: { authorization: 'Bearer admin' } })).json();
   check('admin status returns numbers', st?.stats && st?.brain?.products === 11 && Array.isArray(st.modes), JSON.stringify(st).slice(0, 300));
+
+  // chat tester: talk to the bot as a fake customer, no WhatsApp involved
+  const chatPost = (b: object, tok = 'admin') => fetch(`${base}/admin/chat`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${tok}` }, body: JSON.stringify(b) });
+  check('chat tester needs the admin token', (await chatPost({ text: 'hi' }, 'wrong')).status === 401);
+  const waBefore = calls.wa.length;
+  const cr: any = await (await chatPost({ id: '5', text: 'Hi, I would like to inquire about: Daily Table' })).json();
+  check('chat tester returns the bot reply (2 bubbles, cleaned)', cr.replies?.length === 2 && cr.replies[0].text === 'The Daily Table is Rs. 9,500, solid wood.', JSON.stringify(cr).slice(0, 300));
+  check('chat tester sent nothing through WhatsApp', calls.wa.length === waBefore);
+  check('chat tester can start a fresh customer', ((await (await chatPost({ id: '5', reset: true })).json()) as any).note?.includes('New test customer'));
 } catch (e) {
   console.error(e); failed++;
 } finally { await cleanup(); }

@@ -52,6 +52,10 @@ Vercel: small status dashboard that reads the Worker's /admin/status
 
 Local development: copy `.dev.vars.example` to `.dev.vars`, point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` at a local Postgres (the URL needs a password), run `npm run dev`. Use Meta's **test number** locally.
 
+## Try it without WhatsApp
+
+`npm run chat` (or the Test chat panel on the dashboard) lets you talk to the deployed bot as a fake customer: real AI, Brain sheet, tools, lead capture and Telegram handoff alerts, but nothing goes through WhatsApp (src/admin-chat.ts). Test customers use wa_ids starting with `000`.
+
 ## Brain sheet columns
 
 - **Products**: `name`, `website handle`, `other names`, `price`, `size`, `woods`, `finishes`, `lead time`, `in stock`, `photo urls`, `product url`, `notes`, `active`

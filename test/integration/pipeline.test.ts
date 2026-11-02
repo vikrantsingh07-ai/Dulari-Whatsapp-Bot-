@@ -6,6 +6,7 @@ import { runReply } from '../../src/engine/reply.js';
 import { getConversationByContactWa, setBotMode, setPendingPlan } from '../../src/db/repo.js';
 import { sendHoldingLine, expireHumanMode, sendFollowup } from '../../src/engine/proactive.js';
 import { handleTelegramUpdate } from '../../src/team/commands.js';
+import { testChat } from '../../src/admin-chat.js';
 
 const run = DB_URL ? describe : describe.skip;
 const WA = '919999900001';
@@ -348,5 +349,39 @@ run('pipeline (real Postgres, fake WhatsApp/Telegram/Claude)', () => {
     await handleInbound(t.app, inbound('hello?'));
     const pending = await query('select * from followups where sent_at is null and cancelled_reason is null');
     expect(pending).toHaveLength(0);
+  });
+});
+
+run('chat tester (fake customer, no WhatsApp)', () => {
+  beforeAll(setupDb);
+  afterAll(teardownDb);
+  beforeEach(async () => { await query('truncate contacts cascade'); });
+
+  it('answers a fake customer for real while the whole bot is in shadow mode, and never touches WhatsApp', async () => {
+    const t = makeApp({ settings: [['key', 'value'], ['studio_hours', 'Mon-Sat 10:00-19:00'], ['SHADOW_MODE', 'TRUE']] });
+    t.script.push(reply({ messages: ['Hi! The Daily Table is Rs 9500, solid teak.', 'Which city is it for?'] }));
+    const r = await testChat(t.app, { id: '7', text: 'Hi, I would like to inquire about: Daily Table' });
+    expect(r.replies.map((x) => (x.kind === 'text' ? x.text : x.kind))).toEqual(['Hi! The Daily Table is Rs. 9,500, solid teak.', 'Which city is it for?']);
+    expect(t.sent).toEqual([]); // the real WhatsApp client was never used
+    const [c] = await query('select wa_id, name from contacts');
+    expect(c).toMatchObject({ wa_id: '0000000007', name: 'Test chat' });
+    // second turn remembers the first
+    t.script.push(reply({ messages: ['Gurgaon is fine, delivery is free there.'] }));
+    const r2 = await testChat(t.app, { id: '7', text: 'gurgaon' });
+    expect(r2.replies).toHaveLength(1);
+    expect(JSON.stringify(t.claudeCalls.at(-1).messages)).toContain('Daily Table is Rs. 9,500');
+  });
+
+  it('handoff puts the test customer in human mode, and reset gives a fresh one', async () => {
+    const t = makeApp();
+    t.script.push(toolUse('handoff', { reason: 'trade pricing', urgency: 'hot', summary: 'a\nb\nc' }), reply({ messages: ['Passed it to Akash.'] }));
+    const r = await testChat(t.app, { id: '8', text: '14 binge chairs for a cafe, trade pricing?' });
+    expect(r.mode).toBe('human');
+    expect(t.tgMessages.some((m) => m.text.includes('HOT'))).toBe(true);
+    const silent = await testChat(t.app, { id: '8', text: 'hello?' });
+    expect(silent.replies).toEqual([]);
+    expect(silent.note).toMatch(/handed to the team/);
+    await testChat(t.app, { id: '8', reset: true });
+    expect(await query('select 1 from contacts')).toHaveLength(0);
   });
 });

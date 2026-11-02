@@ -19,7 +19,7 @@ import { sendBubble, sendReaction } from './sender.js';
 import { commitHandoff, replyByFor } from './handoff.js';
 import { describeHours, isOpenNow } from './hours.js';
 import { formatDateTimeIst } from './time.js';
-import { effectiveMode } from './mode.js';
+import { effectiveMode, isTestWaId } from './mode.js';
 import { handoffButtonsForDraft } from '../team/drafts.js';
 
 const GREETING_START = /^\s*(hi|hello|hey|namaste|namaskar)\b/i;
@@ -56,7 +56,7 @@ async function runLocked(app: App, conversationId: string): Promise<void> {
   if (!conv.reply_due_at) return;
   if (conv.reply_due_at.getTime() > now.getTime() + 1000) return;
 
-  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings, hours, now });
+  const mode = effectiveMode({ conversationMode: conv.bot_mode, settings, hours, now, forceLive: isTestWaId(contact.wa_id) });
   if (mode === 'human' || mode === 'off' || contact.opted_out || contact.muted) {
     await clearDue(conv.id, claimedAt);
     return;

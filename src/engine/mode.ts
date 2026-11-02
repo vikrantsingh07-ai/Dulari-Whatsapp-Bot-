@@ -1,6 +1,10 @@
 import type { Settings } from '../brain/types.js';
 import { isOpenNow, type StudioHours } from './hours.js';
 
+/** Chat-tester customers (see src/admin-chat.ts) have wa_ids starting with 000, which no real WhatsApp number does. */
+export const TEST_WA_PREFIX = '000';
+export const isTestWaId = (waId: string) => waId.startsWith(TEST_WA_PREFIX);
+
 export type BotMode = 'auto' | 'human' | 'shadow' | 'off';
 
 /** The one function that decides whether the bot may speak (spec: "Bot modes"). */
@@ -9,12 +13,15 @@ export function effectiveMode(opts: {
   settings: Settings;
   hours: StudioHours;
   now: Date;
+  /** chat-tester customers answer for real even while the whole bot is in shadow mode */
+  forceLive?: boolean;
 }): BotMode {
   const { conversationMode, settings } = opts;
   if (!settings.botEnabled) return 'off';
   if (conversationMode === 'off') return 'off';
   if (conversationMode === 'human') return 'human';
   if (conversationMode === 'shadow') return 'shadow';
+  if (opts.forceLive) return 'auto';
   if (settings.shadowMode) return 'shadow';
   if (settings.shadowDuringStudioHours && isOpenNow(opts.hours, opts.now)) return 'shadow';
   return 'auto';

@@ -74,3 +74,15 @@ Run `npm run setup` again: it skips what is already done. If it says "not health
 5. **The prices and details in it are SAMPLES, not real.** Akash must replace them before the bot answers real customers.
 6. Share the sheet with the service account email (ends in `iam.gserviceaccount.com`) as **Viewer**.
 7. For the Leads sheet: create a blank Google Sheet named **Dulari Leads**, rename its first tab to `Leads`, and share it with the same email as **Editor**.
+
+## Talk to your bot (test conversation), no WhatsApp needed
+
+In the project folder run:
+
+```bash
+npm run chat
+```
+
+Type like a customer ("Hi, I would like to inquire about: Daily Table"). The bot answers with the real AI, your Brain sheet, product photos and handoff rules. Nothing is sent on WhatsApp, and it works even with an expired Meta token and with shadow mode on. Commands: `/new` starts a new customer, `/quit` exits. A handoff (quote, 5+ pieces, complaint) sends the real alert to your Telegram group, and then the bot stays silent for that test customer, exactly like with a real one.
+
+The same chat is a panel at the bottom of the dashboard page.
