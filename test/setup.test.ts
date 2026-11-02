@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { currentHyperdriveId, extractSheetId, fillPassword, looksLikePostgres, needsPassword, parseHyperdriveId, parseWorkerUrl, patchHyperdriveId, pickGroupChatId, patchVar, randomToken } from '../scripts/setup-lib.js';
 import { readFileSync } from 'node:fs';
+import { listSubscribed, subscribeWaba } from '../scripts/subscribe-waba-lib.js';
 
 describe('setup helpers', () => {
   it('extracts a sheet id from a link or bare id', () => {
@@ -43,4 +44,21 @@ describe('setup helpers', () => {
     expect(() => patchVar(src, 'NOPE', 'x')).toThrow();
   });
   it('makes long random tokens', () => { expect(randomToken()).toHaveLength(48); expect(randomToken()).not.toBe(randomToken()); });
+
+  it('subscribes the app to the WhatsApp account and shows before/after', async () => {
+    const calls: string[] = [];
+    let subscribed = false;
+    const f = (async (url: string, init: any) => {
+      calls.push(`${init.method} ${url.split('/').slice(-2).join('/')} ${init.headers.Authorization}`);
+      if (init.method === 'POST') { subscribed = true; return new Response(JSON.stringify({ success: true }), { status: 200 }); }
+      return new Response(JSON.stringify({ data: subscribed ? [{ whatsapp_business_api_data: { id: '1', name: 'Dulari Bot' } }] : [] }), { status: 200 });
+    }) as any;
+    const r = await subscribeWaba(f, 'tok', '2194934211366490');
+    expect(r.before).toEqual([]);
+    expect(r.after).toEqual([{ name: 'Dulari Bot', id: '1', override: undefined }]);
+    expect(r.success).toBe(true);
+    expect(calls).toEqual(['GET 2194934211366490/subscribed_apps Bearer tok', 'POST 2194934211366490/subscribed_apps Bearer tok', 'GET 2194934211366490/subscribed_apps Bearer tok']);
+    const bad = (async () => new Response(JSON.stringify({ error: { message: 'Invalid OAuth access token' } }), { status: 400 })) as any;
+    await expect(listSubscribed(bad, 'x', 'w')).rejects.toThrow(/Invalid OAuth/);
+  });
 });
